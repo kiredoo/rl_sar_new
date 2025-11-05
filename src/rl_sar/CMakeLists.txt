@@ -500,6 +500,32 @@ if(SYSTEM_TYPE STREQUAL "Linux")
     endif()
 endif()
 
+# executable for rl real go2 parkour
+if(SYSTEM_TYPE STREQUAL "Linux")
+    add_executable(rl_real_go2_parkour src/rl_real_go2_parkour.cpp)
+    target_link_libraries(rl_real_go2_parkour
+        unitree_sdk2
+        rl_sdk
+        observation_buffer
+            ${YAML_CPP_LIBRARIES}
+    )
+    # Add unitree_sdk2 library path to RPATH
+    set_target_properties(rl_real_go2_parkour PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/unitree/unitree_sdk2/thirdparty/lib/${ARCH_DIR}"
+    )
+    if(NOT USE_CMAKE)
+        if($ENV{ROS_DISTRO} MATCHES "noetic")
+            target_link_libraries(rl_real_go2_parkour ${catkin_LIBRARIES})
+        elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
+            ament_target_dependencies(rl_real_go2_parkour
+                rclcpp
+                geometry_msgs
+            )
+            install(TARGETS rl_real_go2_parkour DESTINATION lib/${PROJECT_NAME})
+        endif()
+    endif()
+endif()
+
 # executable for rl real g1
 if(SYSTEM_TYPE STREQUAL "Linux")
     add_executable(rl_real_g1 src/rl_real_g1.cpp)

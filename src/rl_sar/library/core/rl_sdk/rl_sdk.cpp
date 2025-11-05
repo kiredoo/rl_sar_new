@@ -197,6 +197,9 @@ void RL::InitObservations()
     this->ComputeObservation();
 }
 
+ // TODO: Write the InitObservationsParkour() + ComputeObservationParkour() to fit extreme parkour's input
+ // TODO: Arange observation here
+
 void RL::InitOutputs()
 {
     int num_of_dofs = this->params.Get<int>("num_of_dofs");
