@@ -425,6 +425,35 @@ if(NOT USE_CMAKE)
     endif()
 endif()
 
+# executable for rl sim_parkour
+if(NOT USE_CMAKE)
+    add_executable(rl_sim_parkour src/rl_sim_parkour.cpp)
+    target_link_libraries(rl_sim_parkour
+        rl_sdk
+        observation_buffer
+        ${YAML_CPP_LIBRARIES}
+        Threads::Threads
+    )
+    if($ENV{ROS_DISTRO} MATCHES "noetic")
+        target_link_libraries(rl_sim_parkour ${catkin_LIBRARIES})
+    elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
+        ament_target_dependencies(rl_sim_parkour
+            joint_state_broadcaster
+            robot_state_publisher
+            rclcpp
+            gazebo_ros
+            std_msgs
+            robot_msgs
+            robot_joint_controller
+            rclpy
+            gazebo_msgs
+            std_srvs
+            geometry_msgs
+        )
+        install(TARGETS rl_sim DESTINATION lib/${PROJECT_NAME})
+    endif()
+endif()
+
 # executable for rl real a1
 if(SYSTEM_TYPE STREQUAL "Linux")
     add_executable(rl_real_a1 src/rl_real_a1.cpp)
