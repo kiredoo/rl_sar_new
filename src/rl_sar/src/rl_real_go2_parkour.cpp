@@ -12,6 +12,7 @@ RL_Real::RL_Real(int argc, char **argv)
 #if defined(USE_ROS1) && defined(USE_ROS)
     ros::NodeHandle nh;
     this->cmd_vel_subscriber = nh.subscribe<geometry_msgs::Twist>("/cmd_vel", 10, &RL_Real::CmdvelCallback, this);
+    this->depth_subscriber = nh.subscribe<std_msgs::Float32MultiArray>("/forward_depth_image", 1, &RL_Real::DepthCallback, this);
 #elif defined(USE_ROS2) && defined(USE_ROS)
     ros2_node = std::make_shared<rclcpp::Node>("rl_real_node");
     this->cmd_vel_subscriber = ros2_node->create_subscription<geometry_msgs::msg::Twist>(

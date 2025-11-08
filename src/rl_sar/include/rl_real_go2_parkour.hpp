@@ -3,13 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef RL_REAL_GO2_PARKOUR_HPP
-#define RL_REAL_GO2_PARKOUR_HPP
+#ifndef RL_REAL_GO2_HPP
+#define RL_REAL_GO2_HPP
 
 // #define PLOT
 // #define CSV_LOGGER
 #define USE_ROS
-#define USE_ROS1
 
 #include "rl_sdk.hpp"
 #include "observation_buffer.hpp"
