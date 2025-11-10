@@ -469,7 +469,7 @@ void RL_Sim::DepthCallback(
 )
 {
     this->depth_data = *msg;
-    std::cout << "Depth data size: " << msg->data.size() << std::endl;
+    // std::cout << "Depth data size: " << msg->data.size() << std::endl;
 }
 
 
