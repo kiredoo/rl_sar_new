@@ -544,7 +544,7 @@ std::vector<float> RL_Sim::Forward()
     {
         actions = this->model->forward({clamped_obs});
     }
-
+    if (this->params.Has("inject_actions")) actions = this->params.Get<std::vector<float>>("inject_actions"); // debug
     if (!this->params.Get<std::vector<float>>("clip_actions_upper").empty() && !this->params.Get<std::vector<float>>("clip_actions_lower").empty())
     {
         return clamp(actions, this->params.Get<std::vector<float>>("clip_actions_lower"), this->params.Get<std::vector<float>>("clip_actions_upper"));
