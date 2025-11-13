@@ -140,7 +140,7 @@ class VisualHandlerNode(object):
     def depth_image_callback(self, msg):
         # depth Image from Gazebo Sim (32FC1/16UC1) # m
         depth_np = rnp.numpify(msg).astype(np.float32)*1000.0  # m -> mm
-        depth_np = np.nan_to_num(depth_np, nan=self.depth_range[1]) # mm
+        depth_np = np.nan_to_num(depth_np, nan=self.depth_range[0]) # mm
         # print(depth_np)
         # nan_count = np.isnan(depth_np).sum()
         # rospy.logwarn_throttle(1.0,
@@ -256,7 +256,7 @@ class VisualHandlerNode(object):
         return depth_image_pyt
     
     def process_depth_tensor(self, depth_image_pyt): # depth_image_pyt: torch (1, H, W), 單位 mm
-        if torch.isnan(depth_image_pyt).any(): rospy.logwarn("NaN detected !!")
+        if torch.isnan(depth_image_pyt).any(): rospy.logwarn_throttle(1.0, "NaN detected !!")
         # cropping
         if self.cropping != [0, 0, 0, 0]:
             top, bottom, left, right = self.cropping
