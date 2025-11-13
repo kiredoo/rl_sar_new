@@ -38,6 +38,34 @@ bool TorchModel::load(const std::string& model_path)
 #ifdef USE_TORCH
         // Load TorchScript model
         model_ = torch::jit::load(model_path);
+
+        // For extreme_parkour actor model , try to get three submodules
+        if (model_path.find("extreme_parkour/base_jit") != std::string::npos)
+        {
+            try
+            {
+                // estimator_ = model_.estimator.estimator
+                estimator_ = model_.attr("estimator").toModule();
+                // actor = model_.actor
+                auto actor_model = model_.attr("actor").toModule();
+                // hist_encoder_ = actor.history_encoder
+                hist_encoder_ = actor_model.attr("history_encoder").toModule();
+                // model_ = actor.actor_backbone (used as the main policy)
+                model_ = actor_model.attr("actor_backbone").toModule();
+
+                std::cout << LOGGER::INFO
+                          << "Loaded parkour submodules (estimator, history_encoder, actor_backbone)"
+                          << std::endl;
+            }
+            catch (const std::exception& e)
+            {
+                std::cout << LOGGER::WARNING
+                          << "Failed to split extreme_parkour model into submodules, "
+                          << "falling back to mono model. Reason: " << e.what()
+                          << std::endl;
+            }
+        }
+
         model_path_ = model_path;
         loaded_ = true;
         std::cout << LOGGER::INFO << "Successfully loaded Torch model: " << model_path << std::endl;
@@ -85,6 +113,142 @@ std::vector<float> TorchModel::forward(const std::vector<std::vector<float>>& in
     catch (const std::exception& e)
     {
         std::cout << LOGGER::ERROR << "Torch inference error: " << e.what() << std::endl;
+        throw;
+    }
+#else
+    throw std::runtime_error("Torch support not compiled");
+#endif
+}
+
+std::vector<float> TorchModel::estimator(const std::vector<float>& inputs)
+{
+    if (!loaded_)
+    {
+        throw std::runtime_error("Model not loaded");
+    }
+
+#ifdef USE_TORCH
+    try
+    {
+        // Convert input vector to Torch tensor
+        const auto& input = inputs;
+        auto input_tensor = torch::tensor(input, torch::kFloat32).reshape({1, static_cast<int64_t>(input.size())});
+
+        // Disable gradient computation before each forward pass
+        torch::autograd::GradMode::set_enabled(false);
+
+        // Ensure single-threaded execution (critical for performance!)
+        torch::set_num_threads(1);
+
+        // Execute forward inference
+        auto output = estimator_.forward({input_tensor}).toTensor();
+
+        // Convert output tensor to vector
+        return torch_to_vector(output);
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << LOGGER::ERROR << "Torch inference error: " << e.what() << std::endl;
+        throw;
+    }
+#else
+    throw std::runtime_error("Torch support not compiled");
+#endif
+}
+
+std::vector<float> TorchModel::history_encoder(const std::vector<float>& inputs)
+{
+    if (!loaded_) {
+        throw std::runtime_error("Model not loaded");
+    }
+
+#ifdef USE_TORCH
+    try {
+        const int64_t hist_len = 10;
+        const int64_t n_propio = 53;
+
+        // [1, hist_len, n_propio]
+        auto input_tensor = torch::tensor(inputs, torch::kFloat32).reshape({1, hist_len, n_propio});
+
+        torch::autograd::GradMode::set_enabled(false);
+        torch::set_num_threads(1);
+
+        // 關鍵：從 actor_backbone 拿到 index=1 的 ELU
+        torch::jit::IValue activation_iv = model_.attr("1");
+
+        // 準備 forward 的參數：[ELU, history_propio]
+        std::vector<torch::jit::IValue> ivals;
+        ivals.push_back(activation_iv);  // ELU
+        ivals.push_back(input_tensor);   // history_propio
+
+        // 呼叫 StateHistoryEncoder.forward(ELU, history_propio)
+        auto output = hist_encoder_.forward(ivals).toTensor();
+
+        return torch_to_vector(output);
+    }
+    catch (const std::exception& e) {
+        std::cout << LOGGER::ERROR
+                  << "Torch inference error (history_encoder): " << e.what()
+                  << std::endl;
+        throw;
+    }
+#else
+    throw std::runtime_error("Torch support not compiled");
+#endif
+}
+
+std::vector<float> TorchModel::depth_forward(const std::vector<float>& depth_vec,
+                                             const std::vector<float>& proprio_vec)
+{
+    if (!loaded_) {
+        throw std::runtime_error("Model not loaded");
+    }
+
+#ifdef USE_TORCH
+    try {
+        // Disable gradient computation and use pure inference mode
+        torch::InferenceMode guard(true);
+
+        // Ensure single-threaded execution (critical for performance!)
+        torch::set_num_threads(1);
+
+        // Hard-coded sizes for DepthOnlyFCBackbone58x87 + RecurrentDepthBackbone
+        const int64_t H         = 58;
+        const int64_t W         = 87;
+        const int64_t N_PROPRIO = 53;
+
+        if (static_cast<int64_t>(depth_vec.size()) != H * W) {
+            throw std::runtime_error(
+                "TorchModel::depth_forward(depth_vec): expected "
+                + std::to_string(H * W) + " elements, got "
+                + std::to_string(depth_vec.size()));
+        }
+        if (static_cast<int64_t>(proprio_vec.size()) != N_PROPRIO) {
+            throw std::runtime_error(
+                "TorchModel::depth_forward(proprio_vec): expected "
+                + std::to_string(N_PROPRIO) + " elements, got "
+                + std::to_string(proprio_vec.size()));
+        }
+
+        // depth_image: [1, 58, 87]
+        auto depth_tensor = torch::tensor(depth_vec, torch::kFloat32).reshape({1, H, W});
+
+        // proprio: [1, 53]
+        auto proprio_tensor = torch::tensor(proprio_vec, torch::kFloat32).reshape({1, N_PROPRIO});
+
+        std::vector<torch::jit::IValue> torch_inputs;
+        torch_inputs.emplace_back(depth_tensor);
+        torch_inputs.emplace_back(proprio_tensor);
+
+        // Depth encoder forward
+        torch::Tensor output = model_.forward(torch_inputs).toTensor();
+
+        return torch_to_vector(output);
+    }
+    catch (const std::exception& e) {
+        std::cout << LOGGER::ERROR
+                  << "Torch inference error (depth_forward): "
+                  << e.what() << std::endl;
         throw;
     }
 #else

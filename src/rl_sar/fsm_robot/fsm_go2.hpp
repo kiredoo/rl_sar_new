@@ -110,6 +110,10 @@ public:
             {
                 return "RLFSMStateRLRobotLabLocomotion";
             }
+            else if (rl.control.current_keyboard == Input::Keyboard::Num3 || rl.control.current_gamepad == Input::Gamepad::RB_DPadLeft)
+            {
+                return "RLFSMStateRLExtremeParkourLocomotion";
+            }
             else if (rl.control.current_keyboard == Input::Keyboard::Num9 || rl.control.current_gamepad == Input::Gamepad::B)
             {
                 return "RLFSMStateGetDown";
@@ -212,9 +216,13 @@ public:
         {
             return "RLFSMStateGetUp";
         }
-        else if (rl.control.current_keyboard == Input::Keyboard::Num1 || rl.control.current_gamepad == Input::Gamepad::RB_DPadDown)
+        else if (rl.control.current_keyboard == Input::Keyboard::Num2 || rl.control.current_gamepad == Input::Gamepad::RB_DPadDown)
         {
             return "RLFSMStateRLRobotLabLocomotion";
+        }
+        else if (rl.control.current_keyboard == Input::Keyboard::Num3 || rl.control.current_gamepad == Input::Gamepad::RB_DPadLeft)
+        {
+            return "RLFSMStateRLExtremeParkourLocomotion";
         }
         return state_name_;
     }
@@ -285,10 +293,84 @@ public:
         {
             return "RLFSMStateRLLocomotion";
         }
+        else if (rl.control.current_keyboard == Input::Keyboard::Num3 || rl.control.current_gamepad == Input::Gamepad::RB_DPadLeft)
+        {
+            return "RLFSMStateRLExtremeParkourLocomotion";
+        }
         return state_name_;
     }
 };
 
+class RLFSMStateRLExtremeParkourLocomotion : public RLFSMState
+{
+public:
+    RLFSMStateRLExtremeParkourLocomotion(RL *rl) : RLFSMState(*rl, "RLFSMStateRLExtremeParkourLocomotion") {}
+
+    float percent_transition = 0.0f;
+
+    void Enter() override
+    {
+        percent_transition = 0.0f;
+        rl.episode_length_buf = 0;
+
+        // read params from yaml
+        rl.config_name = "extreme_parkour";
+        std::string robot_config_path = rl.robot_name + "/" + rl.config_name;
+        try
+        {
+            rl.InitRL(robot_config_path);
+            rl.rl_init_done = true;
+            rl.now_state = *fsm_state;
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << LOGGER::ERROR << "InitRL() failed: " << e.what() << std::endl;
+            rl.rl_init_done = false;
+            rl.fsm.RequestStateChange("RLFSMStatePassive");
+        }
+    }
+
+    void Run() override
+    {
+        if (!rl.rl_init_done) return;
+
+        // position transition from last default_dof_pos to current default_dof_pos
+        // if (Interpolate(percent_transition, rl.now_state.motor_state.q, rl.params.Get<std::vector<float>>("default_dof_pos"), 0.5f, "Policy transition", true)) return;
+
+        std::cout << "\r\033[K" << std::flush << LOGGER::INFO << "RL Controller [" << rl.config_name << "] x:" << rl.control.x << " y:" << rl.control.y << " yaw:" << rl.control.yaw << std::flush;
+        RLControl();
+    }
+
+    void Exit() override
+    {
+        rl.rl_init_done = false;
+    }
+
+    std::string CheckChange() override
+    {
+        if (rl.control.current_keyboard == Input::Keyboard::P || rl.control.current_gamepad == Input::Gamepad::LB_X)
+        {
+            return "RLFSMStatePassive";
+        }
+        else if (rl.control.current_keyboard == Input::Keyboard::Num9 || rl.control.current_gamepad == Input::Gamepad::B)
+        {
+            return "RLFSMStateGetDown";
+        }
+        else if (rl.control.current_keyboard == Input::Keyboard::Num0 || rl.control.current_gamepad == Input::Gamepad::A)
+        {
+            return "RLFSMStateGetUp";
+        }
+        else if (rl.control.current_keyboard == Input::Keyboard::Num1 || rl.control.current_gamepad == Input::Gamepad::RB_DPadUp)
+        {
+            return "RLFSMStateRLLocomotion";
+        }
+        else if (rl.control.current_keyboard == Input::Keyboard::Num2 || rl.control.current_gamepad == Input::Gamepad::RB_DPadDown)
+        {
+            return "RLFSMStateRLRobotLabLocomotion";
+        }
+        return state_name_;
+    }
+};
 } // namespace go2_fsm
 
 class Go2FSMFactory : public FSMFactory
@@ -308,6 +390,8 @@ public:
             return std::make_shared<go2_fsm::RLFSMStateRLLocomotion>(rl);
         else if (state_name == "RLFSMStateRLRobotLabLocomotion")
             return std::make_shared<go2_fsm::RLFSMStateRLRobotLabLocomotion>(rl);
+        else if (state_name == "RLFSMStateRLExtremeParkourLocomotion")
+            return std::make_shared<go2_fsm::RLFSMStateRLExtremeParkourLocomotion>(rl);
         return nullptr;
     }
     std::string GetType() const override { return "go2"; }
@@ -318,7 +402,8 @@ public:
             "RLFSMStateGetUp",
             "RLFSMStateGetDown",
             "RLFSMStateRLLocomotion",
-            "RLFSMStateRLRobotLabLocomotion"
+            "RLFSMStateRLRobotLabLocomotion",
+            "RLFSMStateRLExtremeParkourLocomotion"
         };
     }
     std::string GetInitialState() const override { return initial_state_; }

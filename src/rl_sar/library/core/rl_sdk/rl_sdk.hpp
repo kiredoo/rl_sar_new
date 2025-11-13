@@ -180,6 +180,10 @@ struct Observations
     std::vector<T> dof_pos;
     std::vector<T> dof_vel;
     std::vector<T> actions;
+    std::vector<T> depth_data;
+    std::vector<T> depth_latent;
+    std::vector<T> lin_vel_latent;
+    std::vector<T> priv_latent;
 };
 
 class RL
@@ -233,6 +237,10 @@ public:
     // history buffer
     ObservationBuffer history_obs_buf;
     std::vector<float> history_obs;
+    // parkour variables and functions
+    std::vector<float> hist_proprio;
+    std::vector<float> last_depth_latent_yaw;
+    void push_proprio(const std::vector<float>& proprio, bool episode_reset);
 
     // others
     int motiontime = 0;
@@ -252,6 +260,7 @@ public:
 
     // rl module
     std::unique_ptr<InferenceRuntime::Model> model;
+    std::unique_ptr<InferenceRuntime::Model> depth_model;
     // output buffer
     std::vector<float> output_dof_tau;
     std::vector<float> output_dof_pos;

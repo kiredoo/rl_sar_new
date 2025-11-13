@@ -64,6 +64,7 @@ void RL::StateController(const RobotState<float>* state, RobotCommand<float>* co
 std::vector<float> RL::ComputeObservation()
 {
     std::vector<std::vector<float>> obs_list;
+    std::vector<std::vector<float>> proprio_list;
 
     for (const std::string &observation : this->params.Get<std::vector<std::string>>("observations"))
     {
@@ -165,6 +166,134 @@ std::vector<float> RL::ComputeObservation()
             std::vector<float> phase_vec = {phase};
             obs_list.push_back(phase_vec);
         }
+        // ============= Parkour Observations =============
+        else if (observation == "commands_vx")
+        {
+            std::vector<float> cmd_vx(3, 0.0f);
+            cmd_vx[2] = this->obs.commands[0] * this->params.Get<std::vector<float>>("commands_scale")[0];   // [0, 0, x*scale_x]
+            obs_list.push_back(cmd_vx);
+        }
+        else if (observation == "imu_rp") // should get [roll, pitch] from imu
+        {
+            std::vector<float> imu_rpy = QuaternionToEuler(this->obs.base_quat);
+            obs_list.push_back({imu_rpy[0], imu_rpy[1]});
+        }
+        else if (observation == "delta_yaw")
+        {
+            // It is good now, the value would be inserted at depth_latent output
+            obs_list.push_back({0.0f, 0.0f, 0.0f});
+            // proprio[:, 6:8] = yaw (get from depth encoder output (depth_latent))
+            // [0, delta_yaw, delta_next_yaw] -> [5 ,6 ,7] in proprio
+        }
+        else if (observation == "parkour_mode")
+        {
+            // Use parkour mode for now
+            std::vector<float> walk = {0.0f, 1.0f};
+            std::vector<float> parkour = {1.0f, 0.0f};
+            obs_list.push_back(parkour);
+        }
+        else if (observation == "contact")
+        {
+            // should get from feet contact sensor but we trained a student model that set foot contact as zero
+            obs_list.push_back({0.0f, 0.0f, 0.0f, 0.0f});
+        }
+        else if (observation == "depth_latent") // should get from image encoder
+        {
+            auto image = this->obs.depth_data;
+            
+            std::vector<float> proprio;
+            for (const auto& vec : obs_list) {
+                proprio.insert(proprio.end(), vec.begin(), vec.end());
+            }
+
+            // depth_latent_yaw first 32: depth_latent, last 2: yaw
+            std::vector<float> depth_latent_yaw;
+            if (this->episode_length_buf % 5 == 0 || this->last_depth_latent_yaw.empty()) {
+                depth_latent_yaw = this->depth_model->depth_forward(image, proprio);
+            }else {
+                depth_latent_yaw = this->last_depth_latent_yaw;
+            }
+            this->last_depth_latent_yaw = depth_latent_yaw;
+
+            // depth encoder output
+            std::vector<float> depth_latent(depth_latent_yaw.begin(), depth_latent_yaw.begin() + 32);
+            std::vector<float> yaw(depth_latent_yaw.begin() + 32, depth_latent_yaw.end());
+            if (yaw.size() != 2) {
+                throw std::runtime_error(
+                    "RL::ComputeObservation(): expected yaw size 2, got "
+                    + std::to_string(yaw.size()));
+            }
+
+            // Yaw from command instead of depth encoder output (controllable purpose)
+            // yaw[0] = this->obs.commands[2] * this->params.Get<std::vector<float>>("commands_scale")[2]; // delta_yaw
+            // yaw[1] = this->obs.commands[2] * this->params.Get<std::vector<float>>("commands_scale")[2] * 1.2; // delta_yaw_next
+            // insert yaw into obs_list
+            obs_list[2][1] = yaw[0] * 1.5; // delta_yaw
+            obs_list[2][2] = yaw[1] * 1.5; // delta_yaw_next
+
+            // Save current obs_list to proprio_list for estimator and history encoder use
+            proprio_list.clear();
+            proprio_list = obs_list;
+
+            // push only 32-dim depth_latent into obs_list
+            obs_list.push_back(depth_latent);
+
+            // std::cout << "\n"<< "[depth_latent_yaw] size = " << depth_latent_yaw.size() << "\n";
+            // std::cout << "[depth_latent_yaw] values: [";
+            // for (size_t i = 0; i < depth_latent_yaw.size(); ++i) {
+            //     std::cout << depth_latent_yaw[i];
+            //     if (i + 1 < depth_latent_yaw.size()) {
+            //         std::cout << ", ";
+            //     }
+            // }
+            // std::cout << "]" << std::endl;
+        }
+        else if (observation == "lin_vel_latent") // should get from estimator
+        {
+            std::vector<float> proprio(53, 0.0f);
+            proprio.clear();
+            for (const auto& vec : proprio_list) { // Flatten proprio_list into proprio
+                proprio.insert(proprio.end(), vec.begin(), vec.end());
+            }
+
+            std::vector<float> lin_vel_latent = this->model->estimator(proprio);
+            obs_list.push_back(lin_vel_latent);
+
+            // std::cout << "[lin_vel_latent] size = " << lin_vel_latent.size() << "\n";
+            // std::cout << "[lin_vel_latent] values: [";
+            // for (size_t i = 0; i < lin_vel_latent.size(); ++i) {
+            //     std::cout << lin_vel_latent[i];
+            //     if (i + 1 < lin_vel_latent.size()) {
+            //         std::cout << ", ";
+            //     }
+            // }
+            // std::cout << "]" << std::endl;
+        }
+        else if (observation == "priv_latent") //should get from history encoder
+        {   
+            std::vector<float> proprio(53, 0.0f);
+            proprio.clear();
+            for (const auto& vec : proprio_list) {
+                proprio.insert(proprio.end(), vec.begin(), vec.end());
+            }
+
+            // 判斷是否 episode reset
+            bool episode_reset = (this->episode_length_buf <= 1);
+            this->push_proprio(proprio, episode_reset);
+
+            auto priv_latent = this->model->history_encoder(hist_proprio);
+            obs_list.push_back(priv_latent); 
+
+            // std::cout << "[priv_latent] size = " << priv_latent.size() << "\n";
+            // std::cout << "[priv_latent] values: [";
+            // for (size_t i = 0; i < priv_latent.size(); ++i) {
+            //     std::cout << priv_latent[i];
+            //     if (i + 1 < priv_latent.size()) {
+            //         std::cout << ", ";
+            //     }
+            // }
+            // std::cout << "]" << std::endl;
+        }
     }
 
     this->obs_dims.clear();
@@ -182,8 +311,43 @@ std::vector<float> RL::ComputeObservation()
     return clamped_obs;
 }
 
+void RL::push_proprio(const std::vector<float>& proprio, bool episode_reset)
+{
+    static constexpr size_t N_HIST  = 10;  // history 長度
+    static constexpr size_t N_PROP  = 53;  // proprio 維度
+    static constexpr size_t HIST_DIM = N_HIST * N_PROP;
+    // 要求 proprio 維度必須是 53
+    if (proprio.size() != N_PROP) return;
+
+    // 確保 buffer 大小正確
+    if (hist_proprio.size() != HIST_DIM) hist_proprio.assign(HIST_DIM, 0.0f);
+
+    if (episode_reset) {
+        // torch.stack([proprio]*n_hist_len, dim=1) => 每一個時間步都填同一個 proprio
+        for (size_t t = 0; t < N_HIST; ++t) {
+            float* dst = hist_proprio.data() + t * N_PROP;
+            std::copy(proprio.begin(), proprio.end(), dst);
+        }
+    } else {
+        // torch.cat([history[:,1:], proprio.unsqueeze(1)], dim=1)
+        // 對單一 env 來說: 時間往前平移一格 (丟掉最老的 t=0, 其他 t-1)
+        // shift left by 1 step: [t0, t1, ..., t8, t9] -> [t1, t2, ..., t9, ?]
+        // flatten 表示就是整個 vector 從 index 53 開始 copy 到 index 0
+        std::copy(
+            hist_proprio.begin() + N_PROP,  // 來源起點: 原本 t=1
+            hist_proprio.end(),             // 來源終點: 原本 t=9
+            hist_proprio.begin()            // 目標: t=0
+        );
+        // 把新的 proprio 填進最後一個 block (t = N_HIST-1)
+        float* last_block = hist_proprio.data() + (N_HIST - 1) * N_PROP;
+        std::copy(proprio.begin(), proprio.end(), last_block);
+    }
+}
+
 void RL::InitObservations()
 {
+    this->hist_proprio.clear();
+    this->last_depth_latent_yaw.clear();
     this->obs.lin_vel = {0.0f, 0.0f, 0.0f};
     this->obs.ang_vel = {0.0f, 0.0f, 0.0f};
     this->obs.gravity_vec = {0.0f, 0.0f, -1.0f};
@@ -194,11 +358,17 @@ void RL::InitObservations()
     this->obs.dof_vel.resize(this->params.Get<int>("num_of_dofs"), 0.0f);
     this->obs.actions.clear();
     this->obs.actions.resize(this->params.Get<int>("num_of_dofs"), 0.0f);
+    this->obs.depth_data.clear();
+    this->obs.depth_data.resize(this->params.Get<int>("depth_width")*this->params.Get<int>("depth_height"), 0.0f);
+    this->obs.depth_latent.clear();
+    this->obs.depth_latent.resize(32, 0.0f);
+    this->obs.lin_vel_latent.clear();
+    this->obs.lin_vel_latent.resize(9, 0.0f);
+    this->obs.priv_latent.clear();
+    this->obs.priv_latent.resize(20, 0.0f);
     this->ComputeObservation();
 }
 
- // TODO: Write the InitObservationsParkour() + ComputeObservationParkour() to fit extreme parkour's input
- // TODO: Arange observation here
 
 void RL::InitOutputs()
 {
@@ -234,6 +404,25 @@ void RL::InitRL(std::string robot_config_path)
     // init joint num first
     this->InitJointNum(this->params.Get<int>("num_of_dofs"));
 
+    // init model
+    std::string model_path = std::string(POLICY_DIR) + "/" + robot_config_path + "/" + this->params.Get<std::string>("model_name");
+    this->model = InferenceRuntime::ModelFactory::load_model(model_path);
+    if (!this->model)
+    {
+        throw std::runtime_error("Failed to load model from: " + model_path);
+    }
+    //  init depth model
+    if (this->config_name == "extreme_parkour")
+    {
+        std::string depth_model_path = std::string(POLICY_DIR) + "/" + robot_config_path + "/" + this->params.Get<std::string>("depth_model_name");
+        std::cout << LOGGER::INFO << "Loading Depth model: " << depth_model_path << std::endl;
+        this->depth_model = InferenceRuntime::ModelFactory::load_model(depth_model_path);
+        if (!this->depth_model)
+        {
+            throw std::runtime_error("Failed to load depth model from: " + depth_model_path);
+        }
+    }
+    
     // init rl
     this->InitObservations();
     this->InitOutputs();
@@ -245,14 +434,6 @@ void RL::InitRL(std::string robot_config_path)
     {
         int history_length = *std::max_element(observations_history.begin(), observations_history.end()) + 1;
         this->history_obs_buf = ObservationBuffer(1, this->obs_dims, history_length, this->params.Get<std::string>("observations_history_priority"));
-    }
-
-    // init model
-    std::string model_path = std::string(POLICY_DIR) + "/" + robot_config_path + "/" + this->params.Get<std::string>("model_name");
-    this->model = InferenceRuntime::ModelFactory::load_model(model_path);
-    if (!this->model)
-    {
-        throw std::runtime_error("Failed to load model from: " + model_path);
     }
 }
 
