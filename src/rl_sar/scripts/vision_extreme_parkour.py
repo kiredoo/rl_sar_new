@@ -343,17 +343,25 @@ class VisualHandlerNode(object):
 def main(args):
     rospy.init_node("depth_image", anonymous=False)
 
-    assert args.logdir is not None, "Please provide a logdir"
-    with open(osp.join(args.logdir, "config.json"), "r") as f:
-        config_dict = json.load(f, object_pairs_hook= OrderedDict)
+    # assert args.logdir is not None, "Please provide a logdir"        
+    config_dict = {}
+    config_path = str()
+    if args.logdir is not None:
+        config_path = osp.join(args.logdir, "config.json")
+        if osp.exists(config_path):
+            with open(config_path, "r") as f:
+                config_dict = json.load(f, object_pairs_hook=OrderedDict)
+        else: print(f"Warning: logdir provided but config.json not found at {config_path}")
+    else: print("No logdir provided, using default params")
     print(config_dict)
+    if args.logdir is not None: print(f"Loaded config: {config_path}, BUT NOT USED") # TODO
         
     device = "cpu"
     # duration = config_dict["sensor"]["forward_camera"]["refresh_duration"] # in sec
     duration = 0.01 # duration
 
     visual_node = VisualHandlerNode(
-        cfg= json.load(open(osp.join(args.logdir, "config.json"), "r")),
+        cfg= config_dict,
         cropping= [args.crop_top, args.crop_bottom, args.crop_left, args.crop_right],
         rs_resolution= (args.width, args.height),
         rs_fps= args.fps,
