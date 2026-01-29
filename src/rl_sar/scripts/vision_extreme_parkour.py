@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 import rospy
 
 from std_msgs.msg import Float32MultiArray
@@ -23,6 +24,7 @@ import random
 
 from collections import deque
 import matplotlib.pyplot as plt
+import threading
 
 if os.uname().machine in ["x86_64", "amd64"]:
     sys.path.append(os.path.join(
@@ -52,6 +54,7 @@ class VisualHandlerNode(object):
             camera_info_topic= "/camera/camera_info",
             forward_depth_image_topic= "/forward_depth_image",
             use_sim=False,
+            vision_delay_ms: int = 0
         ):
         
         self.cfg = cfg
@@ -62,10 +65,26 @@ class VisualHandlerNode(object):
         self.camera_info_topic = camera_info_topic
         self.forward_depth_image_topic = forward_depth_image_topic
         self.use_sim = use_sim
+        self.vision_delay_ms = int(max(0, vision_delay_ms))
 
         self.parse_args()
         if not self.use_sim: self.start_pipeline() 
         self.start_ros_handlers()
+        
+        # 以 fps 決定發佈頻率；若 fps 無效就 30Hz
+        pub_hz = int(self.rs_fps) if int(self.rs_fps) > 0 else 30
+        if self.vision_delay_ms <= 0: # 只有在有設定延遲時，才需要 Buffer 和 Timer
+            self._delay_buffer = None
+            self._buf_lock = None
+            self._pub_timer = None
+        else:
+             # 佇列容量：可涵蓋 delay + 0.5s buffer，避免長延遲時取不到幀
+            buf_secs = (self.vision_delay_ms / 1000.0) + 0.5
+            cap = max(int(math.ceil(pub_hz * buf_secs)), pub_hz, 1)
+            self._delay_buffer = deque(maxlen=cap)
+            self._buf_lock = threading.Lock()
+            # 固定頻率定時回調：決定要發佈哪一幀（最接近 now-delay）
+            self._pub_timer = rospy.Timer(rospy.Duration(1.0 / pub_hz), self._delay_publish_timer_cb)
 
         # debug
         # depth_data_sim = np.load('/home/unitree/Desktop/extreme_parkour_onboard/depth_image_random.npy')
@@ -160,23 +179,22 @@ class VisualHandlerNode(object):
         self.publish_depth_data(depth_image_pyt)
 
             
-    def plot_depth_data(self, depth_image_pyt):
+    def plot_depth_data(self, depth_data_flat):
         """Show normalized depth and save when SPACE is pressed."""
-        with torch.no_grad():
-            # depth_image_pyt: (1, H, W), range [-0.5, 0.5]
-            depth_norm = depth_image_pyt.squeeze().cpu().numpy()     # [-0.5, 0.5]
-            depth_show = depth_norm + 0.5                            # [0, 1]
+        h, w = self.output_resolution 
+        # 將一維陣列 reshape 回二維 (H, W)
+        depth_norm = depth_data_flat.reshape(h, w) # [-0.5, 0.5]
+        depth_show = depth_norm + 0.5 # Restore to [0, 1] for visualization
 
         # zoom（same as extreme-parkour-onboard）
         scale_factor = 6
-        h, w = depth_show.shape
         depth_resized = cv2.resize(
             depth_show,
             (w * scale_factor, h * scale_factor),
             interpolation=cv2.INTER_NEAREST,
         )
 
-        cv2.imshow("Depth Data Gazebo", depth_resized)
+        cv2.imshow(f"Depth Data (Delay {self.vision_delay_ms}ms)", depth_resized)
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord(' '):   # SPACE pressed
@@ -273,12 +291,44 @@ class VisualHandlerNode(object):
 
 
     def publish_depth_data(self, depth_data):
+        flat = depth_data.flatten().detach().cpu().numpy()  # (H*W,)
+        if self.vision_delay_ms <= 0:
+            self._publish_array_now(flat)
+        else:
+            ts = time.monotonic()
+            with self._buf_lock:
+                self._delay_buffer.append((ts, flat))
+    
+    def _delay_publish_timer_cb(self, event):
+        # 有延遲：找最接近 now - delay 的幀
+        delay_s = self.vision_delay_ms / 1000.0
+        now_mono = time.monotonic()
+        candidate = None
 
+        with self._buf_lock:
+            # 不斷 pop 左側直到超過目標延遲（保留最後一個 <= delay 的）
+            while self._delay_buffer and (now_mono - self._delay_buffer[0][0]) >= delay_s:
+                candidate = self._delay_buffer.popleft()
+            # 若沒有剛好達標，就用目前隊首作為最接近的
+            if candidate is None and self._delay_buffer:
+                candidate = self._delay_buffer[0]
+
+        if candidate is not None:
+            self._publish_array_now(candidate[1])
+
+    def _publish_array_now(self, flat_arr):
+        # publish delayed frame
         msg = Float32MultiArray()
-        msg.data = depth_data.flatten().detach().cpu().numpy().tolist()
+        msg.data = flat_arr.tolist()
 
         self.forward_depth_image_pub.publish(msg)
         rospy.loginfo_once("depth data published")
+
+        # visualize the DELAYED frame for debug
+        try:
+            self.plot_depth_data(flat_arr)
+        except Exception as e:
+            rospy.logerr("Failed to visualize depth data: %s", e)
 
     def main_loop(self, event=None):
         depth_image_pyt = self.get_depth_frame()
@@ -308,6 +358,7 @@ def main(args):
         rs_resolution= (args.width, args.height),
         rs_fps= args.fps,
         use_sim=args.sim,
+        vision_delay_ms=args.delay,
     )
 
     if args.loop_mode == "while" and not args.sim:
@@ -377,6 +428,10 @@ if __name__ == "__main__":
     parser.add_argument("--sim",
         action="store_true",
         help="Use simulated depth from Gazebo (subscribe to /camera/forward_depth) instead of RealSense"
+    )
+    parser.add_argument("--delay", 
+        type=int, default=0,
+        help="Vision delay in milliseconds for /forward_depth_image. 0 = no delay."
     )
 
     args = parser.parse_args()
