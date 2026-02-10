@@ -4,6 +4,9 @@
  */
 
 #include "rl_sim_parkour.hpp"
+#include <cmath>
+#include <algorithm>
+// #define PLOT
 
 RL_Sim::RL_Sim(int argc, char **argv)
 {
@@ -90,6 +93,45 @@ RL_Sim::RL_Sim(int argc, char **argv)
         const std::string topic_name = this->ros_namespace + joint_controller_name + "/command";
         this->joint_publishers[joint_controller_name] =
             nh.advertise<robot_msgs::MotorCommand>(topic_name, 10);
+    }
+    this->action_dof_pos_publisher =
+        nh.advertise<std_msgs::Float32MultiArray>("/debug/action_dof_pos", 10);
+    this->clamped_obs_publisher =
+        nh.advertise<std_msgs::Float32MultiArray>("/debug/clamped_obs", 10);
+    
+    // Replay clamped_obs support
+    // Enable: rosparam set /use_replay_clamped_obs true
+    nh.param("use_replay_clamped_obs", this->use_replay_clamped_obs, false);
+
+    if (this->use_replay_clamped_obs)
+    {
+        this->replay_clamped_obs_subscriber =
+            nh.subscribe<std_msgs::Float32MultiArray>(
+                "/replay/clamped_obs",
+                10,
+                &RL_Sim::ReplayClampedObsCallback,
+                this);
+        std::cout << LOGGER::INFO
+                  << "[Replay] use_replay_clamped_obs = true, subscribing /replay/clamped_obs"
+                  << std::endl;
+    }
+
+    // Replay output_dof_pos support
+    // Enable: rosparam set /use_replay_output_dof_pos true
+    nh.param("use_replay_output_dof_pos", this->use_replay_output_dof_pos, false);
+
+    if (this->use_replay_output_dof_pos)
+    {
+        this->replay_action_dof_pos_subscriber =
+            nh.subscribe<std_msgs::Float32MultiArray>(
+                "/replay/action_dof_pos",
+                10,
+                &RL_Sim::ReplayActionDofPosCallback,
+                this);
+
+        std::cout << LOGGER::INFO
+                << "[Replay] use_replay_output_dof_pos = true, subscribing /replay/action_dof_pos"
+                << std::endl;
     }
 
     // subscriber
@@ -381,6 +423,26 @@ void RL_Sim::GazeboImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 }
 #endif
 
+#if defined(USE_ROS1)
+void RL_Sim::ReplayClampedObsCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
+{
+    this->replay_clamped_obs.assign(msg->data.begin(), msg->data.end());
+    this->has_replay_clamped_obs = true;
+}
+#endif
+
+#if defined(USE_ROS1)
+void RL_Sim::ReplayActionDofPosCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
+{
+    const int ndof = this->params.Get<int>("num_of_dofs");
+    if ((int)msg->data.size() < ndof) return;
+
+    // Take ONLY the first ndof = output_dof_pos (commanded joint angles)
+    this->replay_output_dof_pos.assign(msg->data.begin(), msg->data.begin() + ndof);
+    this->has_replay_output_dof_pos = true;
+}
+#endif
+
 void RL_Sim::CmdvelCallback(
 #if defined(USE_ROS1)
     const geometry_msgs::Twist::ConstPtr &msg
@@ -491,7 +553,132 @@ void RL_Sim::RunModel()
         this->obs.depth_data.assign(this->depth_data.data.begin(), this->depth_data.data.end());
 
         this->obs.actions = this->Forward();
+
+        if (this->params.Has("test_motion") && this->params.Has("test_motion_duration")) 
+        {
+            // static state (per process). If you run multiple instances, turn these into class members.
+            static bool tm_armed = false;
+            static int  tm_stage = 0;     // 0=idle/arm, 1=ramp-to-start, 2=hold-start-delay, 3=hold-target
+            static int  tm_frame = 0;
+            static int  tm_delay_frame = 0;
+            static std::vector<float> tm_from_actions;
+
+            static const void* tm_last_model_ptr = nullptr;
+            const void* tm_cur_model_ptr = (this->model ? (const void*)this->model.get() : nullptr);
+            if (tm_cur_model_ptr != tm_last_model_ptr)
+            {
+                tm_last_model_ptr = tm_cur_model_ptr;
+                tm_armed = false;
+                tm_stage = 0;
+                tm_frame = 0;
+                tm_delay_frame = 0;
+                tm_from_actions.clear();
+            }
+
+            const bool tm_enabled = this->params.Has("test_motion") && (this->params.Get<int>("test_motion") == 1);
+
+            if (!tm_enabled)
+            {
+                tm_armed = false;
+                tm_stage = 0;
+                tm_frame = 0;
+                tm_delay_frame = 0;
+            }
+            else
+            {
+                const int ndof = this->params.Get<int>("num_of_dofs");
+                const auto start_actions  = this->params.Get<std::vector<float>>("test_motion_start");
+                const auto target_actions = this->params.Get<std::vector<float>>("test_motion_target");
+
+                // RL tick = dt * decimation (defaults to 0.005*4=0.02 if not present)
+                const float base_dt = this->params.Has("dt") ? this->params.Get<float>("dt") : 0.005f;
+                const int decimation = this->params.Has("decimation") ? this->params.Get<int>("decimation") : 4;
+                const float rl_dt = base_dt * (float)decimation;
+
+                // Stage A duration (seconds): use your test_motion_duration as "ramp-to-start time"
+                const float ramp_s = this->params.Has("test_motion_duration") ? this->params.Get<float>("test_motion_duration") : 1.0f;
+                const int ramp_frames = std::max(1, (int)std::ceil(std::max(0.0f, ramp_s) / std::max(1e-6f, rl_dt)));
+
+                // NEW: 1 second delay between Stage A and Stage B (hold start)
+                const float delay_s = 1.0f;
+                const int delay_frames = std::max(1, (int)std::ceil(delay_s / std::max(1e-6f, rl_dt)));
+
+                // Arm once when enabled
+                if (!tm_armed)
+                {
+                    tm_armed = true;
+                    tm_stage = 1;
+                    tm_frame = 0;
+                    tm_delay_frame = 0;
+
+                    // start ramp from whatever action is currently in effect (policy output on this tick)
+                    tm_from_actions.assign(this->obs.actions.begin(), this->obs.actions.begin() + ndof);
+                }
+
+                if (tm_stage == 1)
+                {
+                    // Ramp current -> start_actions over ramp_frames RL ticks
+                    const float alpha = std::min(1.0f, (float)(tm_frame + 1) / (float)ramp_frames);
+                    for (int i = 0; i < ndof; ++i)
+                    {
+                        const float a0 = (i < (int)tm_from_actions.size()) ? tm_from_actions[i] : 0.0f;
+                        const float a1 = (i < (int)start_actions.size()) ? start_actions[i] : 0.0f;
+                        this->obs.actions[i] = (1.0f - alpha) * a0 + alpha * a1;
+                    }
+
+                    tm_frame++;
+                    if (tm_frame >= ramp_frames)
+                    {
+                        tm_stage = 2;          // go to hold-start-delay
+                        tm_delay_frame = 0;
+                    }
+                }
+                else if (tm_stage == 2)
+                {
+                    // Hold start_actions for 1 second
+                    for (int i = 0; i < ndof; ++i)
+                    {
+                        this->obs.actions[i] = (i < (int)start_actions.size()) ? start_actions[i] : 0.0f;
+                    }
+
+                    tm_delay_frame++;
+                    if (tm_delay_frame >= delay_frames)
+                    {
+                        tm_stage = 3;          // then enter hold-target
+                    }
+                }
+                else // tm_stage == 3
+                {
+                    // Step/hold at target_actions indefinitely
+                    for (int i = 0; i < ndof; ++i)
+                    {
+                        this->obs.actions[i] = (i < (int)target_actions.size()) ? target_actions[i] : 0.0f;
+                    }
+                }
+            }
+        }
+
         this->ComputeOutput(this->obs.actions, this->output_dof_pos, this->output_dof_vel, this->output_dof_tau);
+
+        #if defined(USE_ROS1)
+        if (this->use_replay_output_dof_pos && this->has_replay_output_dof_pos)
+        {
+            const int ndof = this->params.Get<int>("num_of_dofs");
+            this->output_dof_pos = this->replay_output_dof_pos;
+            // optional but recommended: don’t keep RL-generated vel/tau when replaying pos
+            this->output_dof_vel.assign(ndof, 0.0f);
+            this->output_dof_tau.assign(ndof, 0.0f);
+        }
+        #endif
+
+        // publish actions and robot's pos here
+        std_msgs::Float32MultiArray msg;
+        msg.data.resize(24);
+        // [0..11) 放 actions
+        std::copy(this->output_dof_pos.begin(), this->output_dof_pos.end(), msg.data.begin());
+        // [12..23) 放 joint positions
+        std::copy(this->obs.dof_pos.begin(), this->obs.dof_pos.end(), msg.data.begin() + 12);
+        this->action_dof_pos_publisher.publish(msg);
 
         if (!this->output_dof_pos.empty())
         {
@@ -531,7 +718,27 @@ std::vector<float> RL_Sim::Forward()
         return this->obs.actions;
     }
 
-    std::vector<float> clamped_obs = this->ComputeObservation();
+    // std::vector<float> clamped_obs = this->ComputeObservation();
+    std::vector<float> clamped_obs;
+
+    #if defined(USE_ROS1)
+        if (this->use_replay_clamped_obs && this->has_replay_clamped_obs)
+        {
+            // Use clamped_obs from replay topic
+            clamped_obs = this->replay_clamped_obs;
+        }
+        else
+        {
+            // Normal sim path
+            clamped_obs = this->ComputeObservation();
+        }
+    #endif
+
+    // publish clamped_obs here
+    std_msgs::Float32MultiArray obs_msg;
+    obs_msg.data.resize(clamped_obs.size());
+    std::copy(clamped_obs.begin(), clamped_obs.end(), obs_msg.data.begin());
+    this->clamped_obs_publisher.publish(obs_msg);
 
     std::vector<float> actions;
     if (this->params.Get<std::vector<int>>("observations_history").size() != 0)
