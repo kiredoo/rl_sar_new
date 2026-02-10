@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<package format="2">
+  <name>motor_msg</name>
+  <version>0.0.0</version>
+  <description>
+    The robot messgaes package.
+  </description>
+  <maintainer email="itri@todo.todo">Ziqi Fan</maintainer>
+  <license>TODO: License declaration</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>message_runtime</depend>
+  <depend>message_generation</depend>
+  
+</package>

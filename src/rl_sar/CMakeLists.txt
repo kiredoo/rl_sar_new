@@ -61,11 +61,13 @@ if(NOT USE_CMAKE)
             robot_msgs
             robot_joint_controller
             rospy
+            motor_msg
         )
         catkin_package(
             CATKIN_DEPENDS
             robot_joint_controller
             rospy
+            motor_msg
         )
     elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
         find_package(ament_cmake REQUIRED)
@@ -551,6 +553,32 @@ if(SYSTEM_TYPE STREQUAL "Linux")
                 geometry_msgs
             )
             install(TARGETS rl_real_go2_parkour DESTINATION lib/${PROJECT_NAME})
+        endif()
+    endif()
+endif()
+
+# executable for rl real idog parkour
+if(SYSTEM_TYPE STREQUAL "Linux")
+    add_executable(rl_real_idog_parkour src/rl_real_idog_parkour.cpp)
+    target_link_libraries(rl_real_idog_parkour
+        unitree_sdk2
+        rl_sdk
+        observation_buffer
+            ${YAML_CPP_LIBRARIES}
+    )
+    # Add unitree_sdk2 library path to RPATH
+    set_target_properties(rl_real_idog_parkour PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/unitree/unitree_sdk2/thirdparty/lib/${ARCH_DIR}"
+    )
+    if(NOT USE_CMAKE)
+        if($ENV{ROS_DISTRO} MATCHES "noetic")
+            target_link_libraries(rl_real_idog_parkour ${catkin_LIBRARIES})
+        elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
+            ament_target_dependencies(rl_real_idog_parkour
+                rclcpp
+                geometry_msgs
+            )
+            install(TARGETS rl_real_idog_parkour DESTINATION lib/${PROJECT_NAME})
         endif()
     endif()
 endif()

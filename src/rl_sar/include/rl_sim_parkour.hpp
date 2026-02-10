@@ -98,6 +98,20 @@ private:
     std::map<std::string, ros::Publisher> joint_publishers;
     std::map<std::string, ros::Subscriber> joint_subscribers;
     std::vector<robot_msgs::MotorCommand> joint_publishers_commands;
+    // profiling
+    ros::Publisher action_dof_pos_publisher;
+    ros::Publisher clamped_obs_publisher;
+    ros::Subscriber replay_action_dof_pos_subscriber;
+    ros::Subscriber replay_clamped_obs_subscriber;
+    std::vector<float> replay_clamped_obs;
+    std::vector<float> replay_output_dof_pos;   // cmd q[0..11] from bag
+    bool use_replay_clamped_obs = false;  // enable/disable via rosparam
+    bool has_replay_clamped_obs = false;  // have we received anything yet?
+    bool use_replay_output_dof_pos = false;  // enable via rosparam
+    bool has_replay_output_dof_pos = false;
+    void ReplayActionDofPosCallback(const std_msgs::Float32MultiArray::ConstPtr &msg);
+    void ReplayClampedObsCallback(const std_msgs::Float32MultiArray::ConstPtr &msg);
+    //
     void ModelStatesCallback(const gazebo_msgs::ModelStates::ConstPtr &msg);
     void JointStatesCallback(const robot_msgs::MotorState::ConstPtr &msg, const std::string &joint_controller_name);
     void CmdvelCallback(const geometry_msgs::Twist::ConstPtr &msg);
