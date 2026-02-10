@@ -240,7 +240,8 @@ void RL_Real::RunModel()
         this->obs.depth_data.assign(this->depth_data.data.begin(), this->depth_data.data.end());
 
         this->obs.actions = this->Forward();
-
+        
+        if (this->params.Has("test_motion") && this->params.Has("test_motion_duration")) 
         {
             // static state (per process). If you run multiple instances, turn these into class members.
             static bool tm_armed = false;
