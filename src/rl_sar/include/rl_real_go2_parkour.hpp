@@ -34,7 +34,7 @@
 #elif defined(USE_ROS2) && defined(USE_ROS)
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <std_msgs/float32_multi_array.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 #endif
 
 #include "matplotlibcpp.h"

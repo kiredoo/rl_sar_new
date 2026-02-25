@@ -10,7 +10,6 @@
 RL_Real::RL_Real(int argc, char **argv)
 {
     bool wheel_mode = (argc > 2 && std::string(argv[2]) == "wheel");
-
 #if defined(USE_ROS1) && defined(USE_ROS)
     ros::NodeHandle nh;
     this->cmd_vel_subscriber = nh.subscribe<geometry_msgs::Twist>("/cmd_vel", 10, &RL_Real::CmdvelCallback, this);
@@ -39,14 +38,45 @@ RL_Real::RL_Real(int argc, char **argv)
 
 #elif defined(USE_ROS2) && defined(USE_ROS)
     ros2_node = std::make_shared<rclcpp::Node>("rl_real_node");
+    ros2_node->declare_parameter("use_replay_clamped_obs", false);
+    ros2_node->get_parameter("use_replay_clamped_obs", this->use_replay_clamped_obs);
+
     this->cmd_vel_subscriber = ros2_node->create_subscription<geometry_msgs::msg::Twist>(
         "/cmd_vel", rclcpp::SystemDefaultsQoS(),
         [this] (const geometry_msgs::msg::Twist::SharedPtr msg) {this->CmdvelCallback(msg);}
     );
-    this->depth_data_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
+
+    this->depth_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
         "/forward_depth_image", rclcpp::SensorDataQoS(),
         [this] (const std_msgs::msg::Float32MultiArray::SharedPtr msg) {this->DepthCallback(msg);}
     );
+
+    this->motor_status_subscriber = ros2_node->create_subscription<motor_msg::msg::LowState>(
+        TOPIC_LOWSTATE, rclcpp::SensorDataQoS(),
+        [this] (const motor_msg::msg::LowState::SharedPtr msg) {this->MotorStatusCallback(msg);}
+    );
+    this->imu_subscriber = ros2_node->create_subscription<sensor_msgs::msg::Imu>(
+        "/imu/data", rclcpp::SensorDataQoS(),
+        [this] (const sensor_msgs::msg::Imu::SharedPtr msg) {this->ImuCallback(msg);}
+    );
+
+    this->joy_subscriber = ros2_node->create_subscription<sensor_msgs::msg::Joy>(
+        TOPIC_JOYSTICK, rclcpp::SystemDefaultsQoS(),
+        [this] (const sensor_msgs::msg::Joy::SharedPtr msg) {this->JoyCallback(msg);}
+    );
+
+    if (this->use_replay_clamped_obs) {
+        this->replay_clamped_obs_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
+            "/replay/clamped_obs", rclcpp::SystemDefaultsQoS(),
+            [this] (const std_msgs::msg::Float32MultiArray::SharedPtr msg) {this->ReplayClampedObsCallback(msg);}
+        );
+        RCLCPP_INFO(ros2_node->get_logger(), "[Replay] use_replay_clamped_obs = true, subscribing /replay/clamped_obs");
+    }
+
+    this->action_dof_pos_publisher = ros2_node->create_publisher<std_msgs::msg::Float32MultiArray>("/debug/action_dof_pos", 10);
+    this->clamped_obs_publisher = ros2_node->create_publisher<std_msgs::msg::Float32MultiArray>("/debug/clamped_obs", 10);
+    
+    this->motor_cmd_publisher = ros2_node->create_publisher<motor_msg::msg::LowCmd>(TOPIC_LOWCMD, rclcpp::SensorDataQoS());
 #endif
 
     // read params from yaml
@@ -72,14 +102,12 @@ RL_Real::RL_Real(int argc, char **argv)
     this->InitJointNum(this->params.Get<int>("num_of_dofs"));
     this->InitOutputs();
     this->InitControl();
-    // create lowcmd publisher
-    this->motor_cmd_publisher = nh.advertise<motor_msg::LowCmd>(TOPIC_LOWCMD, 1);
-    // create lowstate subscriber
-    this->motor_status_subscriber = nh.subscribe<motor_msg::LowState>(TOPIC_LOWSTATE, 1, &RL_Real::MotorStatusCallback, this);
-    // create joystick subscriber
-    this->joy_subscriber = nh.subscribe<sensor_msgs::Joy>(TOPIC_JOYSTICK, 1, &RL_Real::JoyCallback, this);
-    
-    this->imu_subscriber = nh.subscribe<sensor_msgs::Imu>("/imu/data", 1, &RL_Real::ImuCallback, this);
+    #if defined(USE_ROS1)
+        this->motor_cmd_publisher = nh.advertise<motor_msg::LowCmd>(TOPIC_LOWCMD, 1);
+        this->motor_status_subscriber = nh.subscribe<motor_msg::LowState>(TOPIC_LOWSTATE, 1, &RL_Real::MotorStatusCallback, this);
+        this->joy_subscriber = nh.subscribe<sensor_msgs::Joy>(TOPIC_JOYSTICK, 1, &RL_Real::JoyCallback, this);
+        this->imu_subscriber = nh.subscribe<sensor_msgs::Imu>("/imu/data", 1, &RL_Real::ImuCallback, this);
+    #endif
     // this->motor_servo_publisher = nh.advertise<std_msgs::Bool>("/motor_servo", 1);
     // this->motor_tolerance_publisher = nh.advertise<std_msgs::Bool>("/motor_tolerance", 1);
 
@@ -125,40 +153,6 @@ RL_Real::~RL_Real()
 
 void RL_Real::GetState(RobotState<float> *state)
 {
-    // if (this->unitree_joy.components.A) this->control.SetGamepad(Input::Gamepad::A);
-    // if (this->unitree_joy.components.B) this->control.SetGamepad(Input::Gamepad::B);
-    // if (this->unitree_joy.components.X) this->control.SetGamepad(Input::Gamepad::X);
-    // if (this->unitree_joy.components.Y) this->control.SetGamepad(Input::Gamepad::Y);
-    // if (this->unitree_joy.components.L1) this->control.SetGamepad(Input::Gamepad::LB);
-    // if (this->unitree_joy.components.R1) this->control.SetGamepad(Input::Gamepad::RB);
-    // if (this->unitree_joy.components.F1) this->control.SetGamepad(Input::Gamepad::LStick);
-    // if (this->unitree_joy.components.F2) this->control.SetGamepad(Input::Gamepad::RStick);
-    // if (this->unitree_joy.components.up) this->control.SetGamepad(Input::Gamepad::DPadUp);
-    // if (this->unitree_joy.components.down) this->control.SetGamepad(Input::Gamepad::DPadDown);
-    // if (this->unitree_joy.components.left) this->control.SetGamepad(Input::Gamepad::DPadLeft);
-    // if (this->unitree_joy.components.right) this->control.SetGamepad(Input::Gamepad::DPadRight);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.A) this->control.SetGamepad(Input::Gamepad::LB_A);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.B) this->control.SetGamepad(Input::Gamepad::LB_B);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.X) this->control.SetGamepad(Input::Gamepad::LB_X);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.Y) this->control.SetGamepad(Input::Gamepad::LB_Y);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.F1) this->control.SetGamepad(Input::Gamepad::LB_LStick);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.F2) this->control.SetGamepad(Input::Gamepad::LB_RStick);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.up) this->control.SetGamepad(Input::Gamepad::LB_DPadUp);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.down) this->control.SetGamepad(Input::Gamepad::LB_DPadDown);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.left) this->control.SetGamepad(Input::Gamepad::LB_DPadLeft);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.right) this->control.SetGamepad(Input::Gamepad::LB_DPadRight);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.A) this->control.SetGamepad(Input::Gamepad::RB_A);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.B) this->control.SetGamepad(Input::Gamepad::RB_B);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.X) this->control.SetGamepad(Input::Gamepad::RB_X);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.Y) this->control.SetGamepad(Input::Gamepad::RB_Y);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.F1) this->control.SetGamepad(Input::Gamepad::RB_LStick);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.F2) this->control.SetGamepad(Input::Gamepad::RB_RStick);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.up) this->control.SetGamepad(Input::Gamepad::RB_DPadUp);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.down) this->control.SetGamepad(Input::Gamepad::RB_DPadDown);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.left) this->control.SetGamepad(Input::Gamepad::RB_DPadLeft);
-    // if (this->unitree_joy.components.R1 && this->unitree_joy.components.right) this->control.SetGamepad(Input::Gamepad::RB_DPadRight);
-    // if (this->unitree_joy.components.L1 && this->unitree_joy.components.R1) this->control.SetGamepad(Input::Gamepad::LB_RB);
-
     state->imu.quaternion[0] = this->imu.orientation.w; // w
     state->imu.quaternion[1] = this->imu.orientation.x; // x
     state->imu.quaternion[2] = this->imu.orientation.y; // y
@@ -201,10 +195,18 @@ void RL_Real::SetCommand(const RobotCommand<float> *command)
     if (publish_gain)
     {
         this->joint_cmd_msg.cmd = "gain";
-        motor_cmd_publisher.publish(joint_cmd_msg);
+        #if defined(USE_ROS1)
+            motor_cmd_publisher.publish(joint_cmd_msg);
+        #elif defined(USE_ROS2)
+            motor_cmd_publisher->publish(joint_cmd_msg);
+        #endif
     }
     this->joint_cmd_msg.cmd = "position";
-    motor_cmd_publisher.publish(joint_cmd_msg);
+    #if defined(USE_ROS1)
+        motor_cmd_publisher.publish(joint_cmd_msg);
+    #elif defined(USE_ROS2)
+        motor_cmd_publisher->publish(joint_cmd_msg);
+    #endif
     joint_cmd_msg_last = joint_cmd_msg;
 }
 
@@ -348,14 +350,24 @@ void RL_Real::RunModel()
         this->ComputeOutput(this->obs.actions, this->output_dof_pos, this->output_dof_vel, this->output_dof_tau);
 
         // publish actions and robot's pos here
-        std_msgs::Float32MultiArray msg;
+        #if defined(USE_ROS1) && defined(USE_ROS)
+            std_msgs::Float32MultiArray msg;
+        #elif defined(USE_ROS2) && defined(USE_ROS)
+            std_msgs::msg::Float32MultiArray msg;
+        #endif
+
         msg.data.resize(24);
 
         // [0..11] in actions
         std::copy(this->output_dof_pos.begin(), this->output_dof_pos.end(), msg.data.begin());
         // [12..23] in joint positions
         std::copy(this->obs.dof_pos.begin(), this->obs.dof_pos.end(), msg.data.begin() + 12);
-        this->action_dof_pos_publisher.publish(msg);
+        #if defined(USE_ROS1) && defined(USE_ROS)
+            this->action_dof_pos_publisher.publish(msg);
+        #elif defined(USE_ROS2) && defined(USE_ROS)
+            this->action_dof_pos_publisher->publish(msg);
+        #endif
+        
 
         if (!this->output_dof_pos.empty())
         {
@@ -406,11 +418,19 @@ std::vector<float> RL_Real::Forward()
             clamped_obs = this->ComputeObservation();
         }
     #endif
+    #if defined(USE_ROS1) && defined(USE_ROS)
+        std_msgs::Float32MultiArray obs_msg;
+    #elif defined(USE_ROS2) && defined(USE_ROS)
+        std_msgs::msg::Float32MultiArray obs_msg;
+    #endif
 
-    std_msgs::Float32MultiArray obs_msg;
     obs_msg.data.resize(clamped_obs.size());
     std::copy(clamped_obs.begin(), clamped_obs.end(), obs_msg.data.begin());
-    this->clamped_obs_publisher.publish(obs_msg);
+    #if defined(USE_ROS1) && defined(USE_ROS)
+        this->clamped_obs_publisher.publish(obs_msg);
+    #elif defined(USE_ROS2) && defined(USE_ROS)
+        this->clamped_obs_publisher->publish(obs_msg);
+    #endif
 
     std::vector<float> actions;
     if (!this->params.Get<std::vector<int>>("observations_history").empty())
@@ -456,7 +476,13 @@ void RL_Real::Plot()
 }
 
 #if !defined(USE_CMAKE) && defined(USE_ROS)
-void RL_Real::JoyCallback(const sensor_msgs::Joy::ConstPtr &msg)
+void RL_Real::JoyCallback(
+#if defined(USE_ROS1)
+    const sensor_msgs::Joy::ConstPtr &msg
+#elif defined(USE_ROS2)
+    const sensor_msgs::msg::Joy::SharedPtr msg
+#endif
+)
 {
     this->joy_msg = *msg;
 
@@ -506,25 +532,41 @@ void RL_Real::JoyCallback(const sensor_msgs::Joy::ConstPtr &msg)
     this->control.yaw = this->joy_msg.axes[0]; // Rx
 }
 
-void RL_Real::ImuCallback(const sensor_msgs::Imu::ConstPtr &msg)
+void RL_Real::ImuCallback(
+#if defined(USE_ROS1)
+    const sensor_msgs::Imu::ConstPtr &msg
+#elif defined(USE_ROS2)
+    const sensor_msgs::msg::Imu::SharedPtr msg
+#endif
+)
 {
     this->imu = *msg;
 }
 
-void RL_Real::MotorStatusCallback(const motor_msg::LowState::ConstPtr &msg)
+void RL_Real::MotorStatusCallback(
+#if defined(USE_ROS1)
+    const motor_msg::LowState::ConstPtr &msg
+#elif defined(USE_ROS2)
+    const motor_msg::msg::LowState::SharedPtr msg
+#endif
+)
 {
     this->motor_state = *msg;
 }
 
 #endif
 
+void RL_Real::ReplayClampedObsCallback(
 #if defined(USE_ROS1)
-void RL_Real::ReplayClampedObsCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
+    const std_msgs::Float32MultiArray::ConstPtr &msg
+#elif defined(USE_ROS2)
+    const std_msgs::msg::Float32MultiArray::SharedPtr msg
+#endif
+)
 {
     this->replay_clamped_obs.assign(msg->data.begin(), msg->data.end());
     this->has_replay_clamped_obs = true;
 }
-#endif
 
 #if !defined(USE_CMAKE) && defined(USE_ROS)
 void RL_Real::CmdvelCallback(

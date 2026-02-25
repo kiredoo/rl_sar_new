@@ -18,5 +18,6 @@
 #include "fsm_lite3.hpp"
 #include "fsm_tita.hpp"
 #include "fsm_idog.hpp"
+#include "fsm_idogc.hpp"
 
 #endif // FSM_ALL_HPP

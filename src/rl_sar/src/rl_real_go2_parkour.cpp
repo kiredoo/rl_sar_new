@@ -19,7 +19,7 @@ RL_Real::RL_Real(int argc, char **argv)
         "/cmd_vel", rclcpp::SystemDefaultsQoS(),
         [this] (const geometry_msgs::msg::Twist::SharedPtr msg) {this->CmdvelCallback(msg);}
     );
-    this->depth_data_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
+    this->depth_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
         "/forward_depth_image", rclcpp::SensorDataQoS(),
         [this] (const std_msgs::msg::Float32MultiArray::SharedPtr msg) {this->DepthCallback(msg);}
     );

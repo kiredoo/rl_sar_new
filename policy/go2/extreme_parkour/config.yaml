@@ -6,6 +6,7 @@ go2/extreme_parkour:
   depth_model_name: "depth_encoder_jit.pt"
   num_observations: 114
   observations: ["ang_vel", "imu_rp", "delta_yaw", "commands_vx", "parkour_mode", "dof_pos", "dof_vel", "actions", "contact", "depth_latent", "lin_vel_latent", "priv_latent"]
+#   observations: ["ang_vel", "imu_rp", "delta_yaw", "commands", "parkour_mode", "dof_pos", "dof_vel", "actions", "contact", "depth_latent", "lin_vel_latent", "priv_latent"]
   # proprio + depth_latent + lin_vel_latent + priv_latent = 53+32+9+20 = 114
   depth_width: 87
   depth_height: 58
@@ -47,7 +48,7 @@ go2/extreme_parkour:
   ang_vel_scale: 0.25
   dof_pos_scale: 1.0
   dof_vel_scale: 0.05
-  commands_scale: [2.0, 2.0, 1.0]
+  commands_scale: [1.0, 1.0, 1.0]
   torque_limits: [33.5, 33.5, 33.5,
                   33.5, 33.5, 33.5,
                   33.5, 33.5, 33.5,

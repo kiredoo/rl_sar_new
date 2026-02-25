@@ -42,3 +42,16 @@ temp_extract*/
 
 # robot descriptions
 rl_sar_zoo
+# policy/go2/extreme_parkour/
+policy/go2/himloco/bk/
+# depth_debug/
+policy/go2/extreme_parkour/bk/
+src/rl_sar/worlds/stair*/
+*.npy
+*.png
+*.bag
+*.csv
+# policy/go2/extreme_parkour/*.pt
+policy/idog/extreme_parkour/bk/
+policy/idog/himloco/bk/
+# policy/idog/extreme_parkour/

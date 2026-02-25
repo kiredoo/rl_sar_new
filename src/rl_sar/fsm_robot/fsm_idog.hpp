@@ -66,23 +66,23 @@ public:
     {
         percent_pre_getup = 0.0f;
         percent_getup = 0.0f;
+
+        rl.now_state = *fsm_state;
         if (rl.fsm.previous_state_->GetStateName() == "RLFSMStatePassive")
         {
+            rl.start_state = rl.now_state; // Only adjust start_state when coming from passive, so that getdown can return to the correct position
             stand_from_passive = true;
         }
         else
         {
             stand_from_passive = false;
         }
-        rl.now_state = *fsm_state;
-        rl.start_state = rl.now_state;
     }
 
     void Run() override
     {
         if(stand_from_passive)
         {
-
             if (Interpolate(percent_pre_getup, rl.now_state.motor_state.q, pre_running_pos, 1.0f, "Pre Getting up", true)) return;
             if (Interpolate(percent_getup, pre_running_pos, rl.params.Get<std::vector<float>>("default_dof_pos"), 2.0f, "Getting up", true)) return;
         }
@@ -138,10 +138,13 @@ public:
 
     void Run() override
     {
+        // std::cout << "\n[now motor state]: " << rl.now_state.motor_state.q << "\n[start motor state]: " << rl.start_state.motor_state.q << std::endl;
         Interpolate(percent_getdown, rl.now_state.motor_state.q, rl.start_state.motor_state.q, 2.0f, "Getting down", true);
     }
 
-    void Exit() override {}
+    void Exit() override {
+        std::cout << LOGGER::NOTE << "\n\n[GET_DOWN FINISHED]\n\n" << rl.now_state.motor_state.q << std::endl;
+    }
 
     std::string CheckChange() override
     {

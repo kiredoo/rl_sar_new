@@ -82,6 +82,8 @@ if(NOT USE_CMAKE)
         find_package(gazebo_msgs REQUIRED)
         find_package(std_srvs REQUIRED)
         find_package(geometry_msgs REQUIRED)
+        find_package(motor_msg REQUIRED)
+        find_package(sensor_msgs REQUIRED)
         ament_package()
     endif()
     add_compile_options(${GAZEBO_CXX_FLAGS})
@@ -406,6 +408,7 @@ if(NOT USE_CMAKE)
         observation_buffer
         ${YAML_CPP_LIBRARIES}
         Threads::Threads
+        ${ONNXRUNTIME_LIB}
     )
     if($ENV{ROS_DISTRO} MATCHES "noetic")
         target_link_libraries(rl_sim ${catkin_LIBRARIES})
@@ -435,6 +438,7 @@ if(NOT USE_CMAKE)
         observation_buffer
         ${YAML_CPP_LIBRARIES}
         Threads::Threads
+        ${ONNXRUNTIME_LIB}
     )
     if($ENV{ROS_DISTRO} MATCHES "noetic")
         target_link_libraries(rl_sim_parkour ${catkin_LIBRARIES})
@@ -451,8 +455,9 @@ if(NOT USE_CMAKE)
             gazebo_msgs
             std_srvs
             geometry_msgs
+            motor_msg
         )
-        install(TARGETS rl_sim DESTINATION lib/${PROJECT_NAME})
+        install(TARGETS rl_sim_parkour DESTINATION lib/${PROJECT_NAME})
     endif()
 endif()
 
@@ -463,7 +468,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         ${UNITREE_A1_LIBS}
         rl_sdk
         observation_buffer
-            ${YAML_CPP_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     if(NOT USE_CMAKE)
         if($ENV{ROS_DISTRO} MATCHES "noetic")
@@ -487,7 +493,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         ${LITE3_REAL_LIBS}
         rl_sdk
         observation_buffer
-            ${YAML_CPP_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     target_include_directories(rl_real_lite3 PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/deeprobotics/gamepad/include
@@ -512,7 +519,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         unitree_sdk2
         rl_sdk
         observation_buffer
-            ${YAML_CPP_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     # Add unitree_sdk2 library path to RPATH
     set_target_properties(rl_real_go2 PROPERTIES
@@ -538,7 +546,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         unitree_sdk2
         rl_sdk
         observation_buffer
-            ${YAML_CPP_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     # Add unitree_sdk2 library path to RPATH
     set_target_properties(rl_real_go2_parkour PROPERTIES
@@ -564,7 +573,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         unitree_sdk2
         rl_sdk
         observation_buffer
-            ${YAML_CPP_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     # Add unitree_sdk2 library path to RPATH
     set_target_properties(rl_real_idog_parkour PROPERTIES
@@ -577,6 +587,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
             ament_target_dependencies(rl_real_idog_parkour
                 rclcpp
                 geometry_msgs
+                motor_msg
+                sensor_msgs
             )
             install(TARGETS rl_real_idog_parkour DESTINATION lib/${PROJECT_NAME})
         endif()
@@ -590,7 +602,8 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         unitree_sdk2
         rl_sdk
         observation_buffer
-            ${YAML_CPP_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     # Add unitree_sdk2 library path to RPATH
     set_target_properties(rl_real_g1 PROPERTIES
@@ -617,6 +630,7 @@ if(SYSTEM_TYPE STREQUAL "Linux")
         rl_sdk
         observation_buffer
         ${YAML_CPP_LIBRARIES}
+        ${ONNXRUNTIME_LIB}
     )
     if(NOT USE_CMAKE)
         if($ENV{ROS_DISTRO} MATCHES "noetic")

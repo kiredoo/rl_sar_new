@@ -8,6 +8,7 @@
 
 // #define PLOT
 // #define CSV_LOGGER
+#define USE_ROS
 
 #include "rl_sdk.hpp"
 #include "observation_buffer.hpp"
@@ -34,6 +35,10 @@
 #include "robot_msgs/MotorCommand.h"
 #include "robot_msgs/MotorState.h"
 #include <std_msgs/Float32MultiArray.h>
+#include "motor_msg/LowState.h"
+#include "motor_msg/MotorState.h"
+#include "motor_msg/LowCmd.h"
+#include "motor_msg/MotorCmd.h"
 #elif defined(USE_ROS2)
 #include "robot_msgs/msg/robot_command.hpp"
 #include "robot_msgs/msg/robot_state.hpp"
@@ -44,7 +49,11 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <rcl_interfaces/srv/get_parameters.hpp>
-#include <std_msgs/float32_multi_array.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
+#include "motor_msg/msg/low_state.hpp"
+#include "motor_msg/msg/motor_state.hpp"
+#include "motor_msg/msg/low_cmd.hpp"
+#include "motor_msg/msg/motor_cmd.hpp"
 #endif
 
 #include "matplotlibcpp.h"
@@ -88,6 +97,7 @@ private:
     geometry_msgs::Twist cmd_vel;
     sensor_msgs::Joy joy_msg;
     std_msgs::Float32MultiArray depth_data;
+    motor_msg::LowCmd joint_cmd_msg;
     ros::Subscriber model_state_subscriber;
     ros::Subscriber cmd_vel_subscriber;
     ros::Subscriber joy_subscriber;
@@ -101,6 +111,7 @@ private:
     // profiling
     ros::Publisher action_dof_pos_publisher;
     ros::Publisher clamped_obs_publisher;
+    ros::Publisher motor_cmd_publisher;
     ros::Subscriber replay_action_dof_pos_subscriber;
     ros::Subscriber replay_clamped_obs_subscriber;
     std::vector<float> replay_clamped_obs;
@@ -129,9 +140,12 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber;
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscriber;
     rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr depth_subscriber;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr clamped_obs_publisher;
+    rclcpp::Publisher<motor_msg::msg::LowCmd>::SharedPtr motor_cmd_publisher;
     rclcpp::Client<std_srvs::srv::Empty>::SharedPtr gazebo_pause_physics_client;
     rclcpp::Client<std_srvs::srv::Empty>::SharedPtr gazebo_unpause_physics_client;
     rclcpp::Client<std_srvs::srv::Empty>::SharedPtr gazebo_reset_world_client;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr action_dof_pos_publisher;
     rclcpp::Publisher<robot_msgs::msg::RobotCommand>::SharedPtr robot_command_publisher;
     rclcpp::Subscription<robot_msgs::msg::RobotState>::SharedPtr robot_state_subscriber;
     rclcpp::Client<rcl_interfaces::srv::GetParameters>::SharedPtr param_client;
@@ -139,6 +153,7 @@ private:
     void CmdvelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
     void RobotStateCallback(const robot_msgs::msg::RobotState::SharedPtr msg);
     void JoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+    void DepthCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
 #endif
 
     // others

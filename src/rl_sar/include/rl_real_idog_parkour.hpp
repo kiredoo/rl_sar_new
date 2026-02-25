@@ -34,7 +34,13 @@
 #elif defined(USE_ROS2) && defined(USE_ROS)
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <std_msgs/float32_multi_array.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
+#include <sensor_msgs/msg/joy.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include "motor_msg/msg/low_state.hpp"
+#include "motor_msg/msg/motor_state.hpp"
+#include "motor_msg/msg/low_cmd.hpp"
+#include "motor_msg/msg/motor_cmd.hpp"
 #endif
 
 #include "matplotlibcpp.h"
@@ -142,6 +148,25 @@ private:
     std_msgs::msg::Float32MultiArray depth_data;
     rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr depth_subscriber;
     void DepthCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
+    motor_msg::msg::LowState motor_state;
+    rclcpp::Subscription<motor_msg::msg::LowState>::SharedPtr motor_status_subscriber;
+    void MotorStatusCallback(const motor_msg::msg::LowState::SharedPtr msg);
+    sensor_msgs::msg::Imu imu;
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber;
+    void ImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+    sensor_msgs::msg::Joy joy_msg;
+    rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscriber;
+    void JoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr action_dof_pos_publisher;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr clamped_obs_publisher;
+    motor_msg::msg::LowCmd joint_cmd_msg;
+    motor_msg::msg::LowCmd joint_cmd_msg_last;
+    rclcpp::Publisher<motor_msg::msg::LowCmd>::SharedPtr motor_cmd_publisher;
+    rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr replay_clamped_obs_subscriber;
+    std::vector<float> replay_clamped_obs;
+    bool use_replay_clamped_obs = false; 
+    bool has_replay_clamped_obs = false; 
+    void ReplayClampedObsCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
 #endif
 };
 

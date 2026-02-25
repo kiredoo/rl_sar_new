@@ -10,12 +10,12 @@
 
 RL_Sim::RL_Sim(int argc, char **argv)
 {
-#if defined(USE_ROS1)
+#if defined(USE_ROS1) && defined(USE_ROS)
     this->ang_vel_axis = "world";
     ros::NodeHandle nh;
     nh.param<std::string>("ros_namespace", this->ros_namespace, "");
     nh.param<std::string>("robot_name", this->robot_name, "");
-#elif defined(USE_ROS2)
+#elif defined(USE_ROS2) && defined(USE_ROS)
     ros2_node = std::make_shared<rclcpp::Node>("rl_sim_node");
     this->ang_vel_axis = "body";
     this->ros_namespace = ros2_node->get_namespace();
@@ -73,17 +73,18 @@ RL_Sim::RL_Sim(int argc, char **argv)
     }
 
     // init robot
-#if defined(USE_ROS1)
-    this->joint_publishers_commands.resize(this->params.Get<int>("num_of_dofs"));
-#elif defined(USE_ROS2)
-    this->robot_command_publisher_msg.motor_command.resize(this->params.Get<int>("num_of_dofs"));
-    this->robot_state_subscriber_msg.motor_state.resize(this->params.Get<int>("num_of_dofs"));
-#endif
     this->InitJointNum(this->params.Get<int>("num_of_dofs"));
     this->InitOutputs();
     this->InitControl();
 
-#if defined(USE_ROS1)
+    #if defined(USE_ROS1) && defined(USE_ROS)
+        this->joint_publishers_commands.resize(this->params.Get<int>("num_of_dofs"));
+    #elif defined(USE_ROS2) && defined(USE_ROS)
+        this->robot_command_publisher_msg.motor_command.resize(this->params.Get<int>("num_of_dofs"));
+        this->robot_state_subscriber_msg.motor_state.resize(this->params.Get<int>("num_of_dofs"));
+    #endif
+
+#if defined(USE_ROS1) && defined(USE_ROS)
     auto joint_controller_names_vec = this->params.Get<std::vector<std::string>>("joint_controller_names");  // avoid dangling reference
     this->StartJointController(this->ros_namespace, joint_controller_names_vec);
     // publisher
@@ -98,6 +99,8 @@ RL_Sim::RL_Sim(int argc, char **argv)
         nh.advertise<std_msgs::Float32MultiArray>("/debug/action_dof_pos", 10);
     this->clamped_obs_publisher =
         nh.advertise<std_msgs::Float32MultiArray>("/debug/clamped_obs", 10);
+    this->motor_cmd_publisher = 
+        nh.advertise<motor_msg::LowCmd>("/lowcmd", 10);
     
     // Replay clamped_obs support
     // Enable: rosparam set /use_replay_clamped_obs true
@@ -160,11 +163,28 @@ RL_Sim::RL_Sim(int argc, char **argv)
     this->gazebo_pause_physics_client = nh.serviceClient<std_srvs::Empty>("/gazebo/pause_physics");
     this->gazebo_unpause_physics_client = nh.serviceClient<std_srvs::Empty>("/gazebo/unpause_physics");
     this->gazebo_reset_world_client = nh.serviceClient<std_srvs::Empty>("/gazebo/reset_world");
-#elif defined(USE_ROS2)
+#elif defined(USE_ROS2) && defined(USE_ROS)
     this->StartJointController(this->ros_namespace, this->params.Get<std::vector<std::string>>("joint_names"));
+
+    
     // publisher
     this->robot_command_publisher = ros2_node->create_publisher<robot_msgs::msg::RobotCommand>(
         this->ros_namespace + "robot_joint_controller/command", rclcpp::SystemDefaultsQoS());
+    #if defined (USE_ROS1) && defined (USE_ROS)
+        this->action_dof_pos_publisher =
+            nh.advertise<std_msgs::Float32MultiArray>("/debug/action_dof_pos", 10);
+        this->clamped_obs_publisher =
+            nh.advertise<std_msgs::Float32MultiArray>("/debug/clamped_obs", 10);
+        this->motor_cmd_publisher = 
+            nh.advertise<motor_msg::LowCmd>("/lowcmd", 10);
+    #elif defined (USE_ROS2) && defined (USE_ROS)
+        this->action_dof_pos_publisher =
+            ros2_node->create_publisher<std_msgs::msg::Float32MultiArray>("/debug/action_dof_pos", 10);
+        this->clamped_obs_publisher =
+            ros2_node->create_publisher<std_msgs::msg::Float32MultiArray>("/debug/clamped_obs", 10);
+        this->motor_cmd_publisher = 
+            ros2_node->create_publisher<motor_msg::msg::LowCmd>("/lowcmd", 10);
+    #endif
 
     // subscriber
     this->cmd_vel_subscriber = ros2_node->create_subscription<geometry_msgs::msg::Twist>(
@@ -182,7 +202,7 @@ RL_Sim::RL_Sim(int argc, char **argv)
         this->ros_namespace + "robot_joint_controller/state", rclcpp::SystemDefaultsQoS(),
         [this] (const robot_msgs::msg::RobotState::SharedPtr msg) {this->RobotStateCallback(msg);}
     );
-    this->depth_data_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
+    this->depth_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
         "/forward_depth_image", rclcpp::SensorDataQoS(),
         [this] (const std_msgs::msg::Float32MultiArray::SharedPtr msg) {this->DepthCallback(msg);}
     );
@@ -235,7 +255,7 @@ RL_Sim::~RL_Sim()
 
 void RL_Sim::StartJointController(const std::string& ros_namespace, const std::vector<std::string>& names)
 {
-#if defined(USE_ROS1)
+#if defined(USE_ROS1) && defined(USE_ROS)
     pid_t pid0 = fork();
     if (pid0 == 0)
     {
@@ -249,7 +269,7 @@ void RL_Sim::StartJointController(const std::string& ros_namespace, const std::v
         execlp("sh", "sh", "-c", cmd.c_str(), nullptr);
         exit(1);
     }
-#elif defined(USE_ROS2)
+#elif defined(USE_ROS2) && defined(USE_ROS)
     const char* ros_distro = std::getenv("ROS_DISTRO");
     std::string spawner = (ros_distro && std::string(ros_distro) == "foxy") ? "spawner.py" : "spawner";
 
@@ -341,6 +361,11 @@ void RL_Sim::SetCommand(const RobotCommand<float> *command)
         this->joint_publishers_commands[this->params.Get<std::vector<int>>("joint_mapping")[i]].kp = command->motor_command.kp[i];
         this->joint_publishers_commands[this->params.Get<std::vector<int>>("joint_mapping")[i]].kd = command->motor_command.kd[i];
         this->joint_publishers_commands[this->params.Get<std::vector<int>>("joint_mapping")[i]].tau = command->motor_command.tau[i];
+
+        this->joint_cmd_msg.cmd = "position";
+        this->joint_cmd_msg.motor_cmd[i].q = command->motor_command.q[this->params.Get<std::vector<int>>("real_joint_mapping")[i]];
+        this->joint_cmd_msg.motor_cmd[i].kp = command->motor_command.kp[this->params.Get<std::vector<int>>("real_joint_mapping")[i]];
+        this->joint_cmd_msg.motor_cmd[i].kd = command->motor_command.kd[this->params.Get<std::vector<int>>("real_joint_mapping")[i]];
 #elif defined(USE_ROS2)
         this->robot_command_publisher_msg.motor_command[this->params.Get<std::vector<int>>("joint_mapping")[i]].q = command->motor_command.q[i];
         this->robot_command_publisher_msg.motor_command[this->params.Get<std::vector<int>>("joint_mapping")[i]].dq = command->motor_command.dq[i];
@@ -355,6 +380,7 @@ void RL_Sim::SetCommand(const RobotCommand<float> *command)
     {
         this->joint_publishers[this->params.Get<std::vector<std::string>>("joint_controller_names")[i]].publish(this->joint_publishers_commands[i]);
     }
+    motor_cmd_publisher.publish(joint_cmd_msg);
 #elif defined(USE_ROS2)
     this->robot_command_publisher->publish(this->robot_command_publisher_msg);
 #endif
@@ -531,7 +557,6 @@ void RL_Sim::DepthCallback(
 )
 {
     this->depth_data = *msg;
-    // std::cout << "Depth data size: " << msg->data.size() << std::endl;
 }
 
 
@@ -672,13 +697,22 @@ void RL_Sim::RunModel()
         #endif
 
         // publish actions and robot's pos here
-        std_msgs::Float32MultiArray msg;
+        #if defined(USE_ROS1)
+            std_msgs::Float32MultiArray msg;
+        #elif defined(USE_ROS2)
+            std_msgs::msg::Float32MultiArray msg;
+        #endif
         msg.data.resize(24);
         // [0..11) 放 actions
         std::copy(this->output_dof_pos.begin(), this->output_dof_pos.end(), msg.data.begin());
         // [12..23) 放 joint positions
         std::copy(this->obs.dof_pos.begin(), this->obs.dof_pos.end(), msg.data.begin() + 12);
-        this->action_dof_pos_publisher.publish(msg);
+        #if defined(USE_ROS1)
+            this->action_dof_pos_publisher.publish(msg);
+        #elif defined(USE_ROS2)
+            this->action_dof_pos_publisher->publish(msg);
+        #endif
+        
 
         if (!this->output_dof_pos.empty())
         {
@@ -732,13 +766,23 @@ std::vector<float> RL_Sim::Forward()
             // Normal sim path
             clamped_obs = this->ComputeObservation();
         }
+    #elif defined(USE_ROS2)
+        clamped_obs = this->ComputeObservation();
     #endif
 
     // publish clamped_obs here
-    std_msgs::Float32MultiArray obs_msg;
+    #if defined(USE_ROS1)
+        std_msgs::Float32MultiArray obs_msg;
+    #elif defined(USE_ROS2)
+        std_msgs::msg::Float32MultiArray obs_msg;
+    #endif
     obs_msg.data.resize(clamped_obs.size());
     std::copy(clamped_obs.begin(), clamped_obs.end(), obs_msg.data.begin());
-    this->clamped_obs_publisher.publish(obs_msg);
+    #if defined(USE_ROS1)
+        this->clamped_obs_publisher.publish(obs_msg);
+    #elif defined(USE_ROS2)
+        this->clamped_obs_publisher->publish(obs_msg);
+    #endif
 
     std::vector<float> actions;
     if (this->params.Get<std::vector<int>>("observations_history").size() != 0)
@@ -772,10 +816,10 @@ void RL_Sim::Plot()
     {
         this->plot_real_joint_pos[i].erase(this->plot_real_joint_pos[i].begin());
         this->plot_target_joint_pos[i].erase(this->plot_target_joint_pos[i].begin());
-#if defined(USE_ROS1)
+#if defined(USE_ROS1) && defined(USE_ROS)
         this->plot_real_joint_pos[i].push_back(this->joint_positions[this->params.Get<std::vector<std::string>>("joint_controller_names")[i]]);
         this->plot_target_joint_pos[i].push_back(this->joint_publishers_commands[i].q);
-#elif defined(USE_ROS2)
+#elif defined(USE_ROS2) && defined(USE_ROS)
         this->plot_real_joint_pos[i].push_back(this->robot_state_subscriber_msg.motor_state[i].q);
         this->plot_target_joint_pos[i].push_back(this->robot_command_publisher_msg.motor_command[i].q);
 #endif
@@ -788,7 +832,7 @@ void RL_Sim::Plot()
     plt::pause(0.01);
 }
 
-#if defined(USE_ROS1)
+#if defined(USE_ROS1) && defined(USE_ROS)
 void signalHandler(int signum)
 {
     ros::shutdown();
@@ -798,12 +842,12 @@ void signalHandler(int signum)
 
 int main(int argc, char **argv)
 {
-#if defined(USE_ROS1)
+#if defined(USE_ROS1) && defined(USE_ROS)
     signal(SIGINT, signalHandler);
     ros::init(argc, argv, "rl_sar");
     RL_Sim rl_sar(argc, argv);
     ros::spin();
-#elif defined(USE_ROS2)
+#elif defined(USE_ROS2) && defined(USE_ROS)
     rclcpp::init(argc, argv);
     auto rl_sar = std::make_shared<RL_Sim>(argc, argv);
     rclcpp::spin(rl_sar->ros2_node);

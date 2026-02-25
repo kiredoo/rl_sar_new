@@ -88,7 +88,12 @@ std::vector<float> RL::ComputeObservation()
         }
         else if (observation == "gravity_vec")
         {
-            obs_list.push_back(QuatRotateInverse(this->obs.base_quat, this->obs.gravity_vec));
+            // obs_list.push_back(QuatRotateInverse(this->obs.base_quat, this->obs.gravity_vec));
+
+            std::vector<float> fixed_quat = this->obs.base_quat;
+            
+
+            obs_list.push_back(QuatRotateInverse(fixed_quat, this->obs.gravity_vec));
         }
         else if (observation == "commands")
         {
@@ -169,8 +174,12 @@ std::vector<float> RL::ComputeObservation()
         // ============= Parkour Observations =============
         else if (observation == "commands_vx")
         {
+            auto scale = this->params.Get<std::vector<float>>("commands_scale");
             std::vector<float> cmd_vx(3, 0.0f);
-            cmd_vx[2] = this->obs.commands[0] * this->params.Get<std::vector<float>>("commands_scale")[0];   // [0, 0, x*scale_x]
+            // cmd_vx[2] = this->obs.commands[0] * this->params.Get<std::vector<float>>("commands_scale")[0];   // [0, 0, x*scale_x]
+            cmd_vx[0] = this->obs.commands[1] * scale[1];
+            cmd_vx[1] = 0.0f;
+            cmd_vx[2] = this->obs.commands[0] * scale[0];
             obs_list.push_back(cmd_vx);
         }
         else if (observation == "imu_rp") // should get [roll, pitch] from imu
@@ -225,8 +234,10 @@ std::vector<float> RL::ComputeObservation()
             }
 
             // Yaw from command instead of depth encoder output (controllable purpose)
-            // yaw[0] = this->obs.commands[2] * this->params.Get<std::vector<float>>("commands_scale")[2]; // delta_yaw
-            // yaw[1] = this->obs.commands[2] * this->params.Get<std::vector<float>>("commands_scale")[2] * 1.2; // delta_yaw_next
+            if (this->obs.commands[2] > 0.2) {
+                yaw[0] = this->obs.commands[2] * this->params.Get<std::vector<float>>("commands_scale")[2]; // delta_yaw
+                yaw[1] = this->obs.commands[2] * this->params.Get<std::vector<float>>("commands_scale")[2] * 1.2; // delta_yaw_next
+            }
             // insert yaw into obs_list
             obs_list[2][1] = yaw[0] * 1.5; // delta_yaw
             obs_list[2][2] = yaw[1] * 1.5; // delta_yaw_next
@@ -440,6 +451,7 @@ void RL::InitRL(std::string robot_config_path)
 void RL::ComputeOutput(const std::vector<float> &actions, std::vector<float> &output_dof_pos, std::vector<float> &output_dof_vel, std::vector<float> &output_dof_tau)
 {
     std::vector<float> actions_scaled = actions * this->params.Get<std::vector<float>>("action_scale");
+    auto default_dof_pos = this->params.Get<std::vector<float>>("default_dof_pos");
     std::vector<float> pos_actions_scaled = actions_scaled;
     std::vector<float> vel_actions_scaled(actions.size(), 0.0f);
     for (int i : this->params.Get<std::vector<int>>("wheel_indices"))
@@ -452,6 +464,39 @@ void RL::ComputeOutput(const std::vector<float> &actions, std::vector<float> &ou
     output_dof_vel = vel_actions_scaled;
     output_dof_tau = this->params.Get<std::vector<float>>("rl_kp") * (all_actions_scaled + this->params.Get<std::vector<float>>("default_dof_pos") - this->obs.dof_pos) - this->params.Get<std::vector<float>>("rl_kd") * this->obs.dof_vel;
     output_dof_tau = clamp(output_dof_tau, -this->params.Get<std::vector<float>>("torque_limits"), this->params.Get<std::vector<float>>("torque_limits"));
+
+    // static int debug_print_counter = 0;
+    // if (debug_print_counter++ % 50 == 0) 
+    // {
+    //     auto mapping = this->params.Get<std::vector<int>>("joint_mapping");
+    //     auto default_dof_pos = this->params.Get<std::vector<float>>("default_dof_pos");
+    //     int num_dofs = this->params.Get<int>("num_of_dofs");
+
+    //     std::cout << "\n" << "\033[1;36m" << "--- [DEBUG] 所有馬達對齊狀態 (每50次輸出一回) ---" << "\033[0m" << std::endl;
+    //     std::cout << "模型索引(M) -> 機器人索引(R) | 目標(Target) | 實際(Obs) | 誤差(Err)" << std::endl;
+    //     std::cout << "---------------------------------------------------------------" << std::endl;
+
+    //     for (int i = 0; i < num_dofs; ++i) 
+    //     {
+    //         int robot_idx = mapping[i];
+            
+    //         // 注意：這裡計算 Target 的方式必須跟你的程式碼邏輯一致
+    //         // 如果你的程式碼還沒改，這裡顯示的就是「如果映射成功後」該有的數值
+    //         float target = all_actions_scaled[i] + default_dof_pos[robot_idx];
+    //         float obs_val = this->obs.dof_pos[robot_idx];
+    //         float error = target - obs_val;
+
+    //         // 格式化輸出，讓數字對齊好讀
+    //         printf("M[%2d] -> R[%2d] | Target: %6.3f | Obs: %6.3f | Err: %6.3f", 
+    //                 i, robot_idx, target, obs_val, error);
+            
+    //         // 如果誤差太大（例如大於 0.5），印出一個警告符號
+    //         if (std::abs(error) > 0.5f) printf("  \033[1;31m[!] 嚴重偏差\033[0m");
+            
+    //         printf("\n");
+    //     }
+    //     std::cout << "---------------------------------------------------------------" << std::endl;
+    // }
 }
 
 int RL::InverseJointMapping(int idx) const
