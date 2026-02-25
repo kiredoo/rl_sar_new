@@ -28,8 +28,8 @@ fi
 ROBOT_DESC_DIR="${PROJECT_ROOT}/${TARGET_DIR}"
 
 # Repository configuration
-REPO_URL="https://github.com/brian841102/rl_sar_zoo.git"
-REPO_BRANCH="main"
+REPO_URL="ssh://git@gitlab.itriadv.co:9022/itri_robotic/rl_sar_zoo.git"
+REPO_BRANCH="idogc"
 
 # Expected version - update this when URDF files need to be updated
 EXPECTED_VERSION="1.0.1"
