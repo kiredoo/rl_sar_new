@@ -6,7 +6,7 @@
   <description>
     The robot messgaes package.
   </description>
-  <maintainer email="fanziqi614@gmail.com">Ziqi Fan</maintainer>
+  <maintainer email="itricollaboration@itri.org.tw">ITRI</maintainer>
   <license>Apache</license>
 
   <buildtool_depend>catkin</buildtool_depend>

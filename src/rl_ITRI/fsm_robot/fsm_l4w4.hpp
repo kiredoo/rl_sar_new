@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025 Ziqi Fan
+ * Copyright (c) 2024-2025 ITRI
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -53,12 +53,7 @@ public:
 
     float percent_pre_getup = 0.0f;
     float percent_getup = 0.0f;
-    std::vector<float> pre_running_pos = {
-        0.00, 1.36, -2.65, 0.0,
-        0.00, 1.36, -2.65, 0.0,
-        0.00, 1.36, -2.65, 0.0,
-        0.00, 1.36, -2.65, 0.0
-    };
+    std::vector<float> pre_running_pos = rl.params.Get<std::vector<float>>("pre_running_pos");
     bool stand_from_passive = true;
 
     void Enter() override

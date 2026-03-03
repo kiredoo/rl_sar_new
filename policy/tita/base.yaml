@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Ziqi Fan
+# Copyright (c) 2024-2025 ITRI
 # SPDX-License-Identifier: Apache-2.0
 
 tita:
@@ -18,6 +18,9 @@ tita:
   default_dof_pos: [ 0.00, 0.80, -1.50,
                      0.00, 0.80, -1.50,
                      0.00, 0.00]
+  pre_running_pos: [0.00, 1.36, -2.65,
+                    0.00, 1.36, -2.65,
+                    0.00, 0.00,]                     
   joint_names: ["joint_right_leg_1", "joint_right_leg_2", "joint_right_leg_3",
                 "joint_left_leg_1", "joint_left_leg_2", "joint_left_leg_3",
                 "joint_right_leg_4", "joint_left_leg_4"]

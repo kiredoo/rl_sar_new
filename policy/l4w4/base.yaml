@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Ziqi Fan
+# Copyright (c) 2024-2025 ITRI
 # SPDX-License-Identifier: Apache-2.0
 
 l4w4:
@@ -22,6 +22,10 @@ l4w4:
                     -0.042, 0.8752, -1.5184, 0.0,
                      0.042, 0.9576, -1.4933, 0.0,
                     -0.042, 0.9576, -1.4933, 0.0]
+  pre_running_pos: [0.00, 1.36, -2.65, 0.0,
+                    0.00, 1.36, -2.65, 0.0,
+                    0.00, 1.36, -2.65, 0.0,
+                    0.00, 1.36, -2.65, 0.0]                    
   joint_names: ["FL_hip_joint", "FL_thigh_joint", "FL_calf_joint", "FL_foot_joint",
                 "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint", "FR_foot_joint",
                 "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint", "RL_foot_joint",

@@ -11,7 +11,7 @@ Guidelines for modifications:
 
 ## Developers
 
-* Ziqi Fan
+* ITRI
 
 ## Contributors
 
