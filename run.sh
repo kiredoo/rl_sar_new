@@ -112,6 +112,13 @@ cleanup() {
     if [ ! -z "$GAZEBO_PID" ]; then
         kill -SIGINT $GAZEBO_PID 2>/dev/null
     fi
+
+    pkill -9 -f "gzserver"
+    pkill -9 -f "gzclient"
+    pkill -9 -f "robot_state_publisher"
+    pkill -9 -f "joy_node"
+    pkill -9 -f "parameter_blackboard"
+    pkill -9 -f "$SIM_NODE"
     
     sleep 1
     print_success "系統已安全關閉。"
