@@ -41,12 +41,12 @@ MUJOCO_LOG.TXT
 temp_extract*/
 
 # robot descriptions
-rl_sar_zoo
+rl_ITRI_zoo
 # policy/go2/extreme_parkour/
 policy/go2/himloco/bk/
 # depth_debug/
 policy/go2/extreme_parkour/bk/
-src/rl_sar/worlds/stair*/
+src/rl_ITRI/worlds/stair*/
 *.npy
 *.png
 *.bag

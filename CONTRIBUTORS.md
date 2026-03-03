@@ -1,6 +1,6 @@
-# rl_sar Developers and Contributors
+# rl_ITRI Developers and Contributors
 
-This is the official list of rl_sar Project developers and contributors.
+This is the official list of rl_ITRI Project developers and contributors.
 
 To see the full list of contributors, please check the revision history in the source control.
 

@@ -2,8 +2,8 @@
 
 # Automatic download script for robot descriptions
 # Usage: ./download_robot_descriptions.sh [target_dir]
-#   target_dir: Target directory (default: src/rl_sar_zoo)
-#   Example: ./download_robot_descriptions.sh src/rl_sar_zoo
+#   target_dir: Target directory (default: src/rl_ITRI_zoo)
+#   Example: ./download_robot_descriptions.sh src/rl_ITRI_zoo
 
 set -e
 
@@ -19,7 +19,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 # Parse arguments
 if [ $# -eq 0 ]; then
-    TARGET_DIR="src/rl_sar_zoo"
+    TARGET_DIR="src/rl_ITRI_zoo"
 else
     TARGET_DIR="$1"
 fi
@@ -28,7 +28,7 @@ fi
 ROBOT_DESC_DIR="${PROJECT_ROOT}/${TARGET_DIR}"
 
 # Repository configuration
-REPO_URL="ssh://git@gitlab.itriadv.co:9022/itri_robotic/rl_sar_zoo.git"
+REPO_URL="https://gitlab.itriadv.co/itri_robotic/rl_sar_zoo.git"
 REPO_BRANCH="idogc"
 
 # Expected version - update this when URDF files need to be updated

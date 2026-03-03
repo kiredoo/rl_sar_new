@@ -1,4 +1,4 @@
-# rl_sar
+# rl_ITRI
 
 [![Ubuntu 20.04/22.04](https://img.shields.io/badge/Ubuntu-20.04/22.04-blue.svg?logo=ubuntu)](https://ubuntu.com/)
 [![macOS](https://img.shields.io/badge/macOS-Experimental-orange.svg?logo=apple)](https://www.apple.com/macos/)
@@ -41,14 +41,14 @@
 |DDTRobot-Tita (tita)|robot_lab (IsaacSim)|✅|❌|⚪|
 
 > [!IMPORTANT]
-> Python版本暂时停止维护，如有需要请使用[v2.3](https://github.com/fan-ziqi/rl_sar/releases/tag/v2.3)版本，后续可能会重新上线。
+> Python版本暂时停止维护，如有需要请使用[v2.3](https://github.com/fan-ziqi/rl_ITRI/releases/tag/v2.3)版本，后续可能会重新上线。
 
 > [!NOTE]
 > 如果你想使用IsaacLab（IsaacSim）训练策略，请使用 [robot_lab](https://github.com/fan-ziqi/robot_lab) 项目。
 >
 > robot_lab配置文件中的关节顺序 `joint_names` 与本项目代码中 `xxx/robot_lab/config.yaml` 中定义的相同。
 >
-> 在 [Github Discussion](https://github.com/fan-ziqi/rl_sar/discussions) 或 [Discord](https://www.robotsfan.com/dc_rl_sar) 中讨论
+> 在 [Github Discussion](https://github.com/fan-ziqi/rl_ITRI/discussions) 或 [Discord](https://www.robotsfan.com/dc_rl_ITRI) 中讨论
 
 > [!CAUTION]
 > **免责声明：使用者确认使用本代码产生的所有风险及后果均由使用者自行承担，作者不承担任何直接或间接责任，操作前必须确保已采取充分安全防护措施。**
@@ -58,7 +58,7 @@
 拉取仓库
 
 ```bash
-git clone --recursive --depth 1 https://github.com/fan-ziqi/rl_sar.git
+git clone --recursive --depth 1 https://github.com/fan-ziqi/rl_ITRI.git
 ```
 
 如需更新
@@ -149,7 +149,7 @@ Examples:
 
 下文中使用 **\<ROBOT\>/\<CONFIG\>** 代替表示不同的环境，如 `go2/himloco` 、 `go2w/robot_lab`。
 
-运行前请将训练好的pt模型文件拷贝到`rl_sar/src/rl_sar/policy/<ROBOT>/<CONFIG>`中，并配置`<ROBOT>/<CONFIG>/config.yaml`和`<ROBOT>/base.yaml`中的参数。
+运行前请将训练好的pt模型文件拷贝到`rl_ITRI/src/rl_ITRI/policy/<ROBOT>/<CONFIG>`中，并配置`<ROBOT>/<CONFIG>/config.yaml`和`<ROBOT>/base.yaml`中的参数。
 
 ### 仿真
 
@@ -160,11 +160,11 @@ Examples:
 ```bash
 # ROS1
 source devel/setup.bash
-roslaunch rl_sar gazebo.launch rname:=<ROBOT>
+roslaunch rl_ITRI gazebo.launch rname:=<ROBOT>
 
 # ROS2
 source install/setup.bash
-ros2 launch rl_sar gazebo.launch.py rname:=<ROBOT>
+ros2 launch rl_ITRI gazebo.launch.py rname:=<ROBOT>
 ```
 
 打开一个新终端，启动控制程序
@@ -172,11 +172,11 @@ ros2 launch rl_sar gazebo.launch.py rname:=<ROBOT>
 ```bash
 # ROS1
 source devel/setup.bash
-rosrun rl_sar rl_sim
+rosrun rl_ITRI rl_sim
 
 # ROS2
 source install/setup.bash
-ros2 run rl_sar rl_sim
+ros2 run rl_ITRI rl_sim
 ```
 
 > [!TIP]
@@ -272,11 +272,11 @@ ros2 run web_video_server web_video_server
 ```bash
 # ROS1
 source devel/setup.bash
-rosrun rl_sar rl_real_a1
+rosrun rl_ITRI rl_real_a1
 
 # ROS2
 source install/setup.bash
-ros2 run rl_sar rl_real_a1
+ros2 run rl_ITRI rl_real_a1
 
 # CMake
 ./cmake_build/bin/rl_real_a1
@@ -301,11 +301,11 @@ Go2:
 ```bash
 # ROS1
 source devel/setup.bash
-rosrun rl_sar rl_real_go2 <YOUR_NETWORK_INTERFACE> [wheel]
+rosrun rl_ITRI rl_real_go2 <YOUR_NETWORK_INTERFACE> [wheel]
 
 # ROS2
 source install/setup.bash
-ros2 run rl_sar rl_real_go2 <YOUR_NETWORK_INTERFACE> [wheel]
+ros2 run rl_ITRI rl_real_go2 <YOUR_NETWORK_INTERFACE> [wheel]
 
 # CMake
 ./cmake_build/bin/rl_real_go2 <YOUR_NETWORK_INTERFACE> [wheel]
@@ -318,11 +318,11 @@ G1(29dofs):
 ```bash
 # ROS1
 source devel/setup.bash
-rosrun rl_sar rl_real_g1 <YOUR_NETWORK_INTERFACE>
+rosrun rl_ITRI rl_real_g1 <YOUR_NETWORK_INTERFACE>
 
 # ROS2
 source install/setup.bash
-ros2 run rl_sar rl_real_g1 <YOUR_NETWORK_INTERFACE>
+ros2 run rl_ITRI rl_real_g1 <YOUR_NETWORK_INTERFACE>
 
 # CMake
 ./cmake_build/bin/rl_real_g1 <YOUR_NETWORK_INTERFACE>
@@ -355,10 +355,10 @@ ssh unitree@192.168.123.18
 创建一个服务文件
 
 ```bash
-sudo touch /etc/systemd/system/rl_sar.service
+sudo touch /etc/systemd/system/rl_ITRI.service
 ```
 
-写入以下内容，假设rl_sar工程在 `~/rl_sar` 目录下
+写入以下内容，假设rl_ITRI工程在 `~/rl_ITRI` 目录下
 
 ```
 [Unit]
@@ -368,8 +368,8 @@ After=network.target
 [Service]
 Type=simple
 User=unitree
-WorkingDirectory=/home/unitree/rl_sar
-ExecStart=/home/unitree/rl_sar/cmake_build/bin/rl_real_go2 eth0 wheel
+WorkingDirectory=/home/unitree/rl_ITRI
+ExecStart=/home/unitree/rl_ITRI/cmake_build/bin/rl_real_go2 eth0 wheel
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -388,40 +388,40 @@ sudo systemctl daemon-reload
 设置开机自动启动：
 
 ```bash
-sudo systemctl enable rl_sar.service
+sudo systemctl enable rl_ITRI.service
 ```
 
 禁用开机自动启动：
 
 ```bash
-sudo systemctl disable rl_sar.service
+sudo systemctl disable rl_ITRI.service
 ```
 
 启动服务：
 
 ```bash
-sudo systemctl enable rl_sar.service
+sudo systemctl enable rl_ITRI.service
 ```
 
 停止服务：
 
 ```bash
-sudo systemctl stop rl_sar.service
+sudo systemctl stop rl_ITRI.service
 ```
 
 重启服务：
 
 ```bash
-sudo systemctl restart rl_sar.service
+sudo systemctl restart rl_ITRI.service
 ```
 
 查看服务日志：
 
 ```bash
-sudo journalctl -u rl_sar.service -f
+sudo journalctl -u rl_ITRI.service -f
 ```
 
-重启后机机器人会先运行内置站立程序，rl_sar服务启动后则会自动阻尼趴下，随后可以使用遥控器正常控制。
+重启后机机器人会先运行内置站立程序，rl_ITRI服务启动后则会自动阻尼趴下，随后可以使用遥控器正常控制。
 
 </details>
 
@@ -435,11 +435,11 @@ Lite3通过无线网络进行连接。
 - 连接Lite3的Wifi，并测试通信状况。我们强烈建议在运行本项目之前，先通过 [Lite3_Motion_SDK](https://github.com/DeepRoboticsLab/Lite3_MotionSDK)进行测试和检查，在确认一切正常后再运行。
  **(注意：无线连接可能会出现丢包断联甚至失控，请注意安全)**
 
-- 确认所使用Lite3的IP地址和本地端口与目标端口号码，并设置 **在 rl_sar/src/rl_real_lite3.cpp的行46-48**中.
+- 确认所使用Lite3的IP地址和本地端口与目标端口号码，并设置 **在 rl_ITRI/src/rl_real_lite3.cpp的行46-48**中.
 - 在Lite3的运动主机中设置 **jy_exe/conf/network.toml**，使其IP地址指向与Lite3同一网段的本机，建立基于UDP的双向通信.
 
 > [!CAUTION]
-> **检查关节映射参数<br>检查确认 rl_sar/policy/himloco/config.yaml中的joint mappng参数。在Sim2Sim中使用的默认joint mapping参数与实机部署时的joint mapping是不同的，如果使用错误可能造成机器人错误的行为，带来潜在的硬件损坏和安全风险。**
+> **检查关节映射参数<br>检查确认 rl_ITRI/policy/himloco/config.yaml中的joint mappng参数。在Sim2Sim中使用的默认joint mapping参数与实机部署时的joint mapping是不同的，如果使用错误可能造成机器人错误的行为，带来潜在的硬件损坏和安全风险。**
 
 Lite3也支持使用云深处Retroid手柄控制，详情参见[Deeprobotics Gamepad](https://github.com/DeepRoboticsLab/gamepad)
 
@@ -448,11 +448,11 @@ Lite3也支持使用云深处Retroid手柄控制，详情参见[Deeprobotics Gam
 ```bash
 # ROS1
 source devel/setup.bash
-rosrun rl_sar rl_real_lite3
+rosrun rl_ITRI rl_real_lite3
 
 # ROS2
 source install/setup.bash
-ros2 run rl_sar rl_real_lite3
+ros2 run rl_ITRI rl_real_lite3
 
 # CMake
 ./cmake_build/bin/rl_real_lite3
@@ -465,14 +465,14 @@ ros2 run rl_sar rl_real_lite3
 下面拿A1举例
 
 1. 取消注释`rl_real_a1.hpp`中最上面的`#define CSV_LOGGER`，你也可以在仿真程序中修改对应部分采集仿真数据用来测试训练过程。
-2. 运行控制程序，程序会记录所有数据到`src/rl_sar/policy/<ROBOT>/motor.csv`。
-3. 停止控制程序，开始训练执行器网络。注意，下面的路径前均省略了`rl_sar/src/rl_sar/policy/`。
+2. 运行控制程序，程序会记录所有数据到`src/rl_ITRI/policy/<ROBOT>/motor.csv`。
+3. 停止控制程序，开始训练执行器网络。注意，下面的路径前均省略了`rl_ITRI/src/rl_ITRI/policy/`。
     ```bash
-    rosrun rl_sar actuator_net.py --mode train --data a1/motor.csv --output a1/motor.pt
+    rosrun rl_ITRI actuator_net.py --mode train --data a1/motor.csv --output a1/motor.pt
     ```
 4. 验证已经训练好的训练执行器网络。
     ```bash
-    rosrun rl_sar actuator_net.py --mode play --data a1/motor.csv --output a1/motor.pt
+    rosrun rl_ITRI actuator_net.py --mode play --data a1/motor.csv --output a1/motor.pt
     ```
 
 ## 添加你的机器人
@@ -481,13 +481,13 @@ ros2 run rl_sar rl_real_lite3
 
 ```yaml
 # 你的机器人description
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/CMakeLists.txt
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/package.ros1.xml
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/package.ros2.xml
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/xacro/robot.xacro
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/xacro/gazebo.xacro
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/config/robot_control.yaml
-rl_sar/src/rl_sar_zoo/<ROBOT>_description/config/robot_control_ros2.yaml
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/CMakeLists.txt
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/package.ros1.xml
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/package.ros2.xml
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/xacro/robot.xacro
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/xacro/gazebo.xacro
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/config/robot_control.yaml
+rl_ITRI/src/rl_ITRI_zoo/<ROBOT>_description/config/robot_control_ros2.yaml
 
 # 你训练的policy
 policy/<ROBOT>/base.yaml  # 此文件中必须遵守实物机器人的关节顺序
@@ -496,11 +496,11 @@ policy/<ROBOT>/<CONFIG>/<POLICY>.pt  # libtorch使用，注意导出jit
 policy/<ROBOT>/<CONFIG>/<POLICY>.onnx  # onnxruntime使用
 
 # 机器人的fsm
-src/rl_sar/fsm_robot/fsm_<ROBOT>.hpp
-src/rl_sar/fsm_robot/fsm_all.hpp
+src/rl_ITRI/fsm_robot/fsm_<ROBOT>.hpp
+src/rl_ITRI/fsm_robot/fsm_all.hpp
 
 # 你实物机器人的代码
-rl_sar/src/rl_sar/src/rl_real_<ROBOT>.cpp  # 可以按需自定义forward()函数以适配您的policy
+rl_ITRI/src/rl_ITRI/src/rl_real_<ROBOT>.cpp  # 可以按需自定义forward()函数以适配您的policy
 ```
 
 ## 贡献
@@ -514,10 +514,10 @@ rl_sar/src/rl_sar/src/rl_real_<ROBOT>.cpp  # 可以按需自定义forward()函�
 如果您使用此代码或其部分内容，请引用以下内容：
 
 ```
-@software{fan-ziqi2024rl_sar,
+@software{fan-ziqi2024rl_ITRI,
   author = {fan-ziqi},
-  title = {rl_sar: Simulation Verification and Physical Deployment of Robot Reinforcement Learning Algorithm.},
-  url = {https://github.com/fan-ziqi/rl_sar},
+  title = {rl_ITRI: Simulation Verification and Physical Deployment of Robot Reinforcement Learning Algorithm.},
+  url = {https://github.com/fan-ziqi/rl_ITRI},
   year = {2024}
 }
 ```

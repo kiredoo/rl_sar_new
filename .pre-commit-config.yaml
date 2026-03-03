@@ -22,4 +22,4 @@ repos:
           - --comment-style
           - /*| *| */
 
-exclude: ^(src/rl_sar/library/core/matplotlibcpp|src/rl_sar/library/thirdparty)/
+exclude: ^(src/rl_ITRI/library/core/matplotlibcpp|src/rl_ITRI/library/thirdparty)/
