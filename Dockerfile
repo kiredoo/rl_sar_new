@@ -1,15 +1,15 @@
-# =============
-# == Builder ==
-# =============
-FROM osrf/ros:humble-desktop-full AS builder
+# ==========================================
+# == Stage 1: Base (共用環境與相依套件) ==
+# ==========================================
+FROM osrf/ros:humble-desktop-full AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    wget curl unzip git python3-pip patchelf \
-    libyaml-cpp-dev libeigen3-dev libboost-all-dev \
+    wget curl unzip python3-pip patchelf \
+    libyaml-cpp-dev libyaml-cpp0.7 libeigen3-dev libboost-all-dev \
     libspdlog-dev libfmt-dev libtbb-dev liblcm-dev \
-    libglfw3-dev libgl1-mesa-dev xorg-dev \
+    libglfw3-dev libgl1-mesa-dev libglew-dev libosmesa6-dev xorg-dev \
     ros-humble-control-toolbox \
     ros-humble-realtime-tools \
     ros-humble-xacro \
@@ -25,51 +25,43 @@ RUN apt-get update && apt-get install -y \
     ros-humble-joint-state-publisher-gui \
     ros-humble-gazebo-ros2-control \
     ros-humble-gazebo-ros-pkgs \
-    && rm -rf /var/lib/apt/lists/*
-
-
-WORKDIR /workspace
-
-COPY . .
-
-RUN . /opt/ros/humble/setup.sh && \
-    colcon build --merge-install --parallel-workers 2 --cmake-args -DCMAKE_BUILD_TYPE=Release
-
-
-# =============
-# == Runtime ==
-# =============
-FROM osrf/ros:humble-desktop-full
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-    wget curl unzip git python3-pip patchelf \
-    libgl1-mesa-dev libglew-dev libosmesa6-dev \
-    libyaml-cpp0.7 liblcm-dev \
-    ros-humble-teleop-twist-keyboard \
-    ros-humble-ros2-control \
-    ros-humble-ros2-controllers \
-    ros-humble-control-toolbox \
-    ros-humble-realtime-tools \
-    ros-humble-xacro \
-    ros-humble-hardware-interface \
-    ros-humble-controller-interface \
-    ros-humble-joint-state-broadcaster \
-    ros-humble-robot-state-publisher \
-    ros-humble-joint-state-publisher-gui \
-    ros-humble-gazebo-ros2-control \
-    ros-humble-gazebo-ros-pkgs \
     ros-humble-effort-controllers \
     ros-humble-joint-trajectory-controller \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
+# ==========================================
+# == Stage 2: Dev (開發環境) ==
+# ==========================================
+FROM base AS dev
+
+RUN apt-get update && apt-get install -y \
+    git gdb bash-completion \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \
+    echo "if [ -f /workspace/install/setup.bash ]; then source /workspace/install/setup.bash; fi" >> ~/.bashrc
+
+CMD ["bash"]
+
+# ==========================================
+# == Stage 3: Builder (編譯環境) ==
+# ==========================================
+FROM dev AS builder
+
+COPY . .
+
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
+    colcon build --merge-install --parallel-workers 2 --cmake-args -DCMAKE_BUILD_TYPE=Release"
+
+# ==========================================
+# == Stage 4: Prod (正式環境) ==
+# ==========================================
+FROM base AS prod
+
 COPY --from=builder /workspace/install ./install
-
 COPY --from=builder /workspace/library ./library
-
 COPY policy/ ./policy/
 COPY run.sh ./run.sh
 
@@ -86,5 +78,5 @@ ENV PYTHONPATH=$PYTHONPATH:/workspace/install/lib/python3.10/site-packages
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \
     echo "source /workspace/install/setup.bash" >> ~/.bashrc
 
-ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /workspace/install/setup.bash && \"$@\"", "--"]
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /workspace/install/setup.bash && exec \"$@\"", "--"]
 CMD ["bash"]

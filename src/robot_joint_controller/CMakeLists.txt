@@ -69,11 +69,16 @@ elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
         rcl_interfaces
     )
 
-    pluginlib_export_plugin_description_file(controller_interface ros2/robot_joint_controller_plugins.xml)
+    # pluginlib_export_plugin_description_file(controller_interface robot_joint_controller_plugins.xml)
 
-    install(DIRECTORY ros2/include/
-        DESTINATION include/${PROJECT_NAME}
-    )
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/package.ros2.xml" PACKAGE_CONTENT)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/package.xml" "${PACKAGE_CONTENT}")
+
+    set(PACKAGE_XML_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+
+    install(DIRECTORY ros2/include/ DESTINATION include/${PROJECT_NAME})
+    install(FILES ros2/robot_joint_controller_plugins.xml DESTINATION share/${PROJECT_NAME})
+    # install(FILES "${CMAKE_CURRENT_BINARY_DIR}/package.xml" DESTINATION share/${PROJECT_NAME})
 
     ament_export_libraries(${PROJECT_NAME})
     ament_export_dependencies(
@@ -97,5 +102,14 @@ elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
         INCLUDES DESTINATION include
     )
 
+    ament_index_register_resource("controller_interface__pluginlib__plugin" CONTENT "share/${PROJECT_NAME}/robot_joint_controller_plugins.xml")
+
+
     ament_package()
+
+    install(CODE "
+        message(STATUS \"Replacing package.xml symlink with a real file...\")
+        file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/package.xml\")
+        file(COPY \"${CMAKE_CURRENT_BINARY_DIR}/package.xml\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/\")
+    ")
 endif()

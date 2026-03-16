@@ -22,6 +22,5 @@
 
   <export>
     <build_type>ament_cmake</build_type>
-    <pluginlib plugin="${prefix}/share/${PROJECT_NAME}/robot_joint_controller_plugins.xml"/>
   </export>
 </package>
