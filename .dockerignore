@@ -1,0 +1,12 @@
+build/
+install/
+log/
+.cache/
+.vscode/
+cmake_build/
+*.zip
+*.tar.gz
+.git/
+logs/
+.catkin_tools/
+devel/
