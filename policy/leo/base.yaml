@@ -1,0 +1,50 @@
+# Copyright (c) 2024-2025 ITRI
+# SPDX-License-Identifier: Apache-2.0
+
+leo:
+  dt: 0.005
+  decimation: 4
+  fixed_kp: [500.0, 500.0, 500.0,
+             500.0, 500.0, 500.0,
+             500.0, 500.0, 500.0,
+             500.0, 500.0, 500.0]
+  fixed_kd: [8.0, 8.0, 8.0,
+             8.0, 8.0, 8.0,
+             8.0, 8.0, 8.0,
+             8.0, 8.0, 8.0]
+  num_of_dofs: 12
+  wheel_indices: []
+  torque_limits: [33.5, 33.5, 33.5,
+                  33.5, 33.5, 33.5,
+                  33.5, 33.5, 33.5,
+                  33.5, 33.5, 33.5]
+
+  # default_dof_pos: [ 0.1000,  0.8000, -1.5000,
+  #                   -0.1000, -0.8000,  1.5000,
+  #                   -0.1000,  1.0000, -1.5000,
+  #                    0.1000, -1.0000,  1.5000]
+
+  default_dof_pos: [ 0.0100,  0.8000, -1.7000,
+                    -0.0100, -0.8000,  1.7000,
+                    -0.0100,  1.0000, -1.7000,
+                     0.0100, -1.0000,  1.7000]
+
+  pre_running_pos: [ 0.0100,  0.8000, -1.7000,
+                    -0.0100, -0.8000,  1.7000,
+                    -0.0100,  1.0000, -1.7000,
+                     0.0100, -1.0000,  1.7000,]
+
+  joint_names: ["FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
+                "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
+                "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
+                "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint"]
+  joint_controller_names: ["FR_hip_controller", "FR_thigh_controller", "FR_calf_controller",
+                           "FL_hip_controller", "FL_thigh_controller", "FL_calf_controller",
+                           "RR_hip_controller", "RR_thigh_controller", "RR_calf_controller",
+                           "RL_hip_controller", "RL_thigh_controller", "RL_calf_controller"]
+
+
+  #joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] 
+  joint_mapping: [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
+  #real_joint_mapping: [2, 1, 0, 5, 4, 3, 11, 10, 9, 8, 7, 6] # mapping from sim order to real robot order (FL, FR, RL, RR)
+
