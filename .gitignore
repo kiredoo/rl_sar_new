@@ -43,7 +43,7 @@ temp_extract*/
 # robot descriptions
 rl_ITRI_zoo
 # policy/go2/extreme_parkour/
-policy/go2/
+# policy/go2/
 # depth_debug/
 src/rl_ITRI/worlds/stair*/
 *.npy
