@@ -1,0 +1,15 @@
+# schema=1
+# Run summary — rlsim_D_default_rep1_20260513-170114
+# Generated 2026-05-13T09:02:31Z by tools/compute_summary.sh
+
+## Raw totals (from snapshot_rss.sh '# totals' footer)
+arm D
+  pre : # totals minflt=37287 majflt=1 rss_kb=196324 vol_ctx=36818 invol_ctx=22 num=1
+  post: # totals minflt=37400 majflt=1 rss_kb=196416 vol_ctx=104587 invol_ctx=39 num=1
+
+## Bag-phase delta (post - pre)
+arm          minflt       majflt       rss_kb      vol_ctx    invol_ctx   nprocs   aborts
+D               113            0           92        67769           17        1        0
+
+## Steady-state RSS at pre-bag (kB)
+  D      196324

@@ -1,0 +1,24 @@
+#!/usr/bin/env bpftrace
+/*
+  bpftrace script to monitor rl_sim thread scheduling
+  Attach to a running PID using `-p <pid>` (method B)
+  Outputs timestamped CSV for later loop interval / deadline analysis
+*/
+
+BEGIN
+{
+    printf("timestamp_ns,event_type,tid,prev_tid\n");
+    printf("# Use bpftrace -p <PID> rl_sim_bpftrace_attach_csv.bt > output.csv\n");
+}
+
+/* thread is woken up */
+tracepoint:sched:sched_wakeup
+{
+    printf("%llu,wakeup,%d,0\n", nsecs, tid);
+}
+
+/* thread is switched out */
+tracepoint:sched:sched_switch
+{
+    printf("%llu,switch,%d,%d\n", nsecs, prev_tid, next_tid);
+}

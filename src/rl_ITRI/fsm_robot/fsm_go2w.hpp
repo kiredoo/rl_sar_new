@@ -77,12 +77,12 @@ public:
         if(stand_from_passive)
         {
 
-            if (Interpolate(percent_pre_getup, rl.now_state.motor_state.q, pre_running_pos, 1.0f, "Pre Getting up", true)) return;
-            if (Interpolate(percent_getup, pre_running_pos, rl.params.Get<std::vector<float>>("default_dof_pos"), 2.0f, "Getting up", true)) return;
+            if (Interpolate(percent_pre_getup, rl.now_state.motor_state.q, pre_running_pos, GetTransitionDuration("pre_running_pos", 1.0f), "Pre Getting up", true)) return;
+            if (Interpolate(percent_getup, pre_running_pos, rl.params.Get<std::vector<float>>("default_dof_pos"), GetTransitionDuration("default_dof_pos", 2.0f), "Getting up", true)) return;
         }
         else
         {
-            if (Interpolate(percent_getup, rl.now_state.motor_state.q, rl.params.Get<std::vector<float>>("default_dof_pos"), 1.0f, "Getting up", true)) return;
+            if (Interpolate(percent_getup, rl.now_state.motor_state.q, rl.params.Get<std::vector<float>>("default_dof_pos"), GetTransitionDuration("default_dof_pos", 1.0f), "Getting up", true)) return;
         }
     }
 

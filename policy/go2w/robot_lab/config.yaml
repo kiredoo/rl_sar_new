@@ -60,4 +60,7 @@ go2w/robot_lab:
                      0.00, 0.80, -1.50,
                      0.00, 0.80, -1.50,
                      0.00, 0.00, 0.00, 0.00]
+  transition_duration:
+    default_dof_pos: 2.0
+
   joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]

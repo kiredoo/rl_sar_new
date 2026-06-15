@@ -105,6 +105,9 @@ g1/robomimic/locomotion:
                                         0.00,  0.00,
                                         0.00,  0.00,
                                         0.00,  0.00]
+  transition_duration:
+    default_dof_pos: 2.0
+
   joint_mapping: [0, 6, 12,
                   1, 7, 13,
                   2, 8, 14,

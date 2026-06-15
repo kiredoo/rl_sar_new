@@ -4,6 +4,17 @@
  */
 
 #include "rl_sim.hpp"
+#include <chrono>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <sys/stat.h>
+#include <cerrno>
+#include <cstring>
+#include <ctime>
+#include <thread>
 
 RL_Sim::RL_Sim(int argc, char **argv)
 {
@@ -139,6 +150,10 @@ RL_Sim::RL_Sim(int argc, char **argv)
         this->ros_namespace + "robot_joint_controller/state", rclcpp::SystemDefaultsQoS(),
         [this] (const robot_msgs::msg::RobotState::SharedPtr msg) {this->RobotStateCallback(msg);}
     );
+    this->depth_subscriber = ros2_node->create_subscription<std_msgs::msg::Float32MultiArray>(
+        "/forward_depth_image", rclcpp::SensorDataQoS(),
+        [this] (const std_msgs::msg::Float32MultiArray::SharedPtr msg) {this->DepthCallback(msg);}
+    );
 
     // service
     this->gazebo_pause_physics_client = ros2_node->create_client<std_srvs::srv::Empty>("/pause_physics");
@@ -151,7 +166,7 @@ RL_Sim::RL_Sim(int argc, char **argv)
 
     // loop
     this->loop_control = std::make_shared<LoopFunc>("loop_control", this->params.Get<float>("dt"), std::bind(&RL_Sim::RobotControl, this));
-    this->loop_rl = std::make_shared<LoopFunc>("loop_rl", this->params.Get<float>("dt") * this->params.Get<int>("decimation"), std::bind(&RL_Sim::RunModel, this));
+    this->loop_rl = std::make_shared<LoopFunc>("loop_rl", this->params.Get<float>("dt") * this->params.Get<int>("decimation"), std::bind(&RL_Sim::RunModel, this), -1, 0.01);
     this->loop_control->start();
     this->loop_rl->start();
 
@@ -226,9 +241,25 @@ void RL_Sim::StartJointController(const std::string& ros_namespace, const std::v
     pid_t pid = fork();
     if (pid == 0)
     {
+        // Filter noetic paths from PYTHONPATH to prevent ROS1/ROS2 module conflicts
+        const char* orig_pypath = std::getenv("PYTHONPATH");
+        if (orig_pypath) {
+            std::stringstream ss(orig_pypath);
+            std::string entry, filtered;
+            bool first = true;
+            while (std::getline(ss, entry, ':')) {
+                if (entry.find("noetic") == std::string::npos) {
+                    if (!first) filtered += ":";
+                    filtered += entry;
+                    first = false;
+                }
+            }
+            setenv("PYTHONPATH", filtered.c_str(), 1);
+        }
         std::string cmd = "ros2 run controller_manager " + spawner + " robot_joint_controller ";
         cmd += "-p " + tmp_path.string() + " ";
         // cmd += " > /dev/null 2>&1";  // Comment this line to see the output
+        std::cout << "cmd: " << cmd << std::endl;
         execlp("sh", "sh", "-c", cmd.c_str(), nullptr);
         exit(1);
     }
@@ -453,10 +484,53 @@ void RL_Sim::RobotStateCallback(const robot_msgs::msg::RobotState::SharedPtr msg
 {
     this->robot_state_subscriber_msg = *msg;
 }
+
+void RL_Sim::DepthCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg)
+{
+    this->depth_data = *msg;
+}
 #endif
+
+static inline bool file_exists(const std::string& path) {
+  struct stat st;
+  return ::stat(path.c_str(), &st) == 0;
+}
+
+static inline long long now_epoch_ns() {
+  using namespace std::chrono;
+  return duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+static inline long long now_mono_ns() {
+  using namespace std::chrono;
+  return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+static void append_csv_row(const std::string& filename,
+                           long long t_epoch_ns,
+                           long long t_mono_ns,
+                           long long elapsed_us) {
+  const bool existed = file_exists(filename);
+
+  std::ofstream out(filename, std::ios::app);
+  if (!out) {
+    std::cerr << "Failed to open file: " << filename
+              << " errno=" << errno << " (" << std::strerror(errno) << ")\n";
+    return;
+  }
+
+  if (!existed) {
+    out << "t_epoch_ns,t_mono_ns,elapsed_us\n";
+  }
+
+  out << t_epoch_ns << "," << t_mono_ns << "," << elapsed_us << "\n";
+}
 
 void RL_Sim::RunModel()
 {
+    auto t0_epoch = now_epoch_ns();
+    auto t0_mono  = now_mono_ns();
+    auto start = std::chrono::steady_clock::now();
     if (this->rl_init_done && simulation_running)
     {
         this->episode_length_buf += 1;
@@ -469,8 +543,15 @@ void RL_Sim::RunModel()
         this->obs.base_quat = this->robot_state.imu.quaternion;
         this->obs.dof_pos = this->robot_state.motor_state.q;
         this->obs.dof_vel = this->robot_state.motor_state.dq;
+        this->obs.depth_data.assign(this->depth_data.data.begin(), this->depth_data.data.end());
 
         this->obs.actions = this->Forward();
+        // std::cout << LOGGER::INFO << "Actions: " << this->obs.actions << std::endl;
+        // std::cout << LOGGER::INFO << "Commands: " << this->obs.commands << std::endl;
+        // std::cout << LOGGER::INFO << "Base Quaternion: " << this->obs.base_quat << std::endl;
+        // std::cout << LOGGER::INFO << "DOF Position: " << this->obs.dof_pos << std::endl;
+        // std::cout << LOGGER::INFO << "DOF Velocity: " << this->obs.dof_vel << std::endl;
+
         this->ComputeOutput(this->obs.actions, this->output_dof_pos, this->output_dof_vel, this->output_dof_tau);
 
         if (!this->output_dof_pos.empty())
@@ -498,6 +579,9 @@ void RL_Sim::RunModel()
         this->CSVLogger(this->output_dof_tau, tau_est, this->obs.dof_pos, this->output_dof_pos, this->obs.dof_vel);
 #endif
     }
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    append_csv_row("/home/itri/rl_sar_new/rl_sar/loopfunc_rl.csv", t0_epoch, t0_mono, elapsed_us);
 }
 
 std::vector<float> RL_Sim::Forward()
@@ -512,6 +596,30 @@ std::vector<float> RL_Sim::Forward()
     }
 
     std::vector<float> clamped_obs = this->ComputeObservation();
+    // std::cout << "=== ALL obs 45 values ===" << std::endl;
+    // std::cout << std::fixed << std::setprecision(4);
+    // std::cout << "commands: ";
+    // for (int i = 0; i < 3; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+    // std::cout << "ang_vel: ";
+    // for (int i = 3; i < 6; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+    // std::cout << "gravity_vec: ";
+    // for (int i = 6; i < 9; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+    // std::cout << "dof_pos: ";
+    // for (int i = 9; i < 21; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+    // std::cout << "dof_vel: ";
+    // for (int i = 21; i < 33; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+    // std::cout << "actions: ";
+    // for (int i = 33; i < 45; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+    // std::cout << "depth_image: ";
+    // for (int i = 45; i < 4141; ++i) std::cout << clamped_obs[i] << " ";
+    // std::cout << "\n";
+
 
     std::vector<float> actions;
     if (this->params.Get<std::vector<int>>("observations_history").size() != 0)

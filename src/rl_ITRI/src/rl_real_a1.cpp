@@ -301,7 +301,7 @@ int main(int argc, char **argv)
 #elif defined(USE_ROS2) && defined(USE_ROS)
     rclcpp::init(argc, argv);
     auto rl_itri = std::make_shared<RL_Real>(argc, argv);
-    rclcpp::spin(rl_ITRI->ros2_node);
+    rclcpp::spin(rl_itri->ros2_node);
     rclcpp::shutdown();
 #elif defined(USE_CMAKE) || !defined(USE_ROS)
     RL_Real rl_itri(argc, argv);

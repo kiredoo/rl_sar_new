@@ -34,4 +34,8 @@ lite3:
                            "FR_HipX_controller", "FR_HipY_controller", "FR_Knee_controller",
                            "HL_HipX_controller", "HL_HipY_controller", "HL_Knee_controller",
                            "HR_HipX_controller", "HR_HipY_controller", "HR_Knee_controller"]
+  transition_duration:
+    pre_running_pos: 1.0
+    default_dof_pos: 2.0
+
   joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]

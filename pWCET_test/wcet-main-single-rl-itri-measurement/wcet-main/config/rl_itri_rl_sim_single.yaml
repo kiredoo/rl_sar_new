@@ -1,0 +1,16 @@
+target:
+  # This command is executed with: bash -lc "<command>".
+  # Source your ROS 2 workspace before running this tool, or add source commands here.
+  command: ros2 run rl_ITRI rl_sim
+  log_filename: rl_itri_rl_sim_target.log
+  ready_sleep_seconds: 10.0
+  shutdown_on_finish: true
+
+measurement:
+  callback_names_txt: ../cb_names/rl_itri_rl_sim_functions.txt
+  # Keep this narrow so readelf only scans RL_ITRI-related executables/libraries.
+  # If no function can be found, try "rl_sim" or your install/build path substring.
+  elf_path_must_contain: rl_ITRI
+  duration_seconds: 30.0
+  ignore_cache: true
+  wait_ebpf_timeout_seconds: 30.0

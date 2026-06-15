@@ -1,0 +1,13 @@
+#!/usr/bin/env bpftrace
+
+BEGIN {
+    printf("timestamp_ns,event_type,pid\n");
+}
+
+tracepoint:sched:sched_wakeup {
+    printf("%llu,wakeup,%d\n", nsecs, args->pid);
+}
+
+tracepoint:sched:sched_switch {
+    printf("%llu,switch,%d,%d\n", nsecs, args->prev_pid, args->next_pid);
+}

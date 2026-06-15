@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Single-run raw timing report</title>
+<style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 24px;
+      color: #222;
+    }
+    h1 { margin-bottom: 0.2rem; }
+    h2 {
+      margin-top: 2rem;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 0.3rem;
+    }
+    .muted { color: #777; }
+    .meta {
+      background: #f7f7f7;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: right;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { background: #f2f2f2; }
+    .warn { color: #9a5b00; font-weight: 600; }
+    .ok { color: #0a6b2b; font-weight: 600; }
+    details {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin: 10px 0;
+    }
+    summary { cursor: pointer; font-weight: 700; }
+    .hist { margin: 10px 0; }
+    .hist-row {
+      display: grid;
+      grid-template-columns: 180px 1fr 60px;
+      gap: 8px;
+      align-items: center;
+      margin: 3px 0;
+      font-size: 12px;
+    }
+    .hist-label { color: #555; text-align: right; }
+    .hist-bar-wrap {
+      background: #eee;
+      height: 14px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .hist-bar { background: #5d7fa3; height: 100%; }
+    .hist-count { text-align: right; color: #555; }
+    code {
+      background: #f4f4f4;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    </style>
+</head>
+<body>
+<h1>Single-run raw timing report</h1>
+
+<div class="meta">
+  <div><b>Input:</b> <code>sampled_execution_time/20260518155931.json</code></div>
+  <div><b>Hostname:</b> itri</div>
+  <div><b>Sampling time:</b> 2026-05-18T15:59:31.629847</div>
+  <div><b>Unit:</b> nanosecond</div>
+  <div><b>Callbacks/functions:</b> 9 total,
+    <span class="ok">6 with samples</span>,
+    <span class="warn">3 empty</span>
+  </div>
+</div>
+
+<p class="muted">
+This report is for single-run raw observation only.
+It does not perform EVT / GEV / IESTA pWCET fitting.
+Use the original wcet_utils.py report only after installing the statistical dependencies
+and collecting enough repeated runs.
+</p>
+
+<h2>Top callbacks/functions by observed max</h2>
+<table>
+<tr>
+  <th>name</th>
+  <th>count</th>
+  <th>min</th>
+  <th>median</th>
+  <th>mean</th>
+  <th>p95</th>
+  <th>p99</th>
+  <th>p99.9</th>
+  <th>max</th>
+  <th>stdev</th>
+</tr>
+<tr><td>RL_Sim::RobotControl</td><td>2998</td><td>819.565 µs</td><td>1.221 ms</td><td>1.215 ms</td><td>1.749 ms</td><td>2.038 ms</td><td>2.329 ms</td><td>2.518 ms</td><td>308.008 µs</td></tr>
+<tr><td>RL_Sim::RunModel</td><td>1551</td><td>343.983 µs</td><td>631.505 µs</td><td>648.888 µs</td><td>855.626 µs</td><td>944.957 µs</td><td>1.115 ms</td><td>1.269 ms</td><td>115.467 µs</td></tr>
+<tr><td>RL_Sim::SetCommand</td><td>2998</td><td>504.614 µs</td><td>548.413 µs</td><td>628.352 µs</td><td>918.456 µs</td><td>966.900 µs</td><td>1.101 ms</td><td>1.228 ms</td><td>134.594 µs</td></tr>
+<tr><td>RL_Sim::GetState</td><td>2998</td><td>308.622 µs</td><td>469.524 µs</td><td>487.781 µs</td><td>697.672 µs</td><td>860.586 µs</td><td>956.499 µs</td><td>958.517 µs</td><td>153.874 µs</td></tr>
+<tr><td>RL_Sim::Forward</td><td>1551</td><td>227.792 µs</td><td>433.753 µs</td><td>444.947 µs</td><td>595.585 µs</td><td>656.970 µs</td><td>707.010 µs</td><td>743.655 µs</td><td>80.812 µs</td></tr>
+<tr><td>RL_Sim::GazeboImuCallback</td><td>2998</td><td>600 ns</td><td>1.260 µs</td><td>1.391 µs</td><td>2.412 µs</td><td>3.670 µs</td><td>5.441 µs</td><td>6.190 µs</td><td>542 ns</td></tr>
+</table>
+
+<h2>Empty callbacks/functions</h2>
+<ul><li><code>RL_Sim::CmdvelCallback</code></li>
+<li><code>RL_Sim::RobotStateCallback</code></li>
+<li><code>RL_Sim::JoyCallback</code></li></ul>
+
+<h2>Detailed histograms</h2>
+<details><summary>RL_Sim::RobotControl — 2998 samples, max 2.518 ms</summary><table><tr><th>count</th><th>min</th><th>median</th><th>mean</th><th>p95</th><th>p99</th><th>p99.9</th><th>max</th><th>stdev</th></tr><tr><td>2998</td><td>819.565 µs</td><td>1.221 ms</td><td>1.215 ms</td><td>1.749 ms</td><td>2.038 ms</td><td>2.329 ms</td><td>2.518 ms</td><td>308.008 µs</td></tr></table><div class="hist">
+<div class="hist-row"><div class="hist-label">819.565 µs – 876.169 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:100.0%"></div></div><div class="hist-count">575</div></div>
+<div class="hist-row"><div class="hist-label">876.169 µs – 932.774 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:47.7%"></div></div><div class="hist-count">274</div></div>
+<div class="hist-row"><div class="hist-label">932.774 µs – 989.378 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:14.3%"></div></div><div class="hist-count">82</div></div>
+<div class="hist-row"><div class="hist-label">989.378 µs – 1.046 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:15.0%"></div></div><div class="hist-count">86</div></div>
+<div class="hist-row"><div class="hist-label">1.046 ms – 1.103 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:20.5%"></div></div><div class="hist-count">118</div></div>
+<div class="hist-row"><div class="hist-label">1.103 ms – 1.159 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:41.6%"></div></div><div class="hist-count">239</div></div>
+<div class="hist-row"><div class="hist-label">1.159 ms – 1.216 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:19.5%"></div></div><div class="hist-count">112</div></div>
+<div class="hist-row"><div class="hist-label">1.216 ms – 1.272 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:46.4%"></div></div><div class="hist-count">267</div></div>
+<div class="hist-row"><div class="hist-label">1.272 ms – 1.329 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:32.9%"></div></div><div class="hist-count">189</div></div>
+<div class="hist-row"><div class="hist-label">1.329 ms – 1.386 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:30.6%"></div></div><div class="hist-count">176</div></div>
+<div class="hist-row"><div class="hist-label">1.386 ms – 1.442 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:24.0%"></div></div><div class="hist-count">138</div></div>
+<div class="hist-row"><div class="hist-label">1.442 ms – 1.499 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:33.2%"></div></div><div class="hist-count">191</div></div>
+<div class="hist-row"><div class="hist-label">1.499 ms – 1.555 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:24.5%"></div></div><div class="hist-count">141</div></div>
+<div class="hist-row"><div class="hist-label">1.555 ms – 1.612 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:12.0%"></div></div><div class="hist-count">69</div></div>
+<div class="hist-row"><div class="hist-label">1.612 ms – 1.669 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:17.7%"></div></div><div class="hist-count">102</div></div>
+<div class="hist-row"><div class="hist-label">1.669 ms – 1.725 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.8%"></div></div><div class="hist-count">62</div></div>
+<div class="hist-row"><div class="hist-label">1.725 ms – 1.782 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:11.8%"></div></div><div class="hist-count">68</div></div>
+<div class="hist-row"><div class="hist-label">1.782 ms – 1.838 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.9%"></div></div><div class="hist-count">34</div></div>
+<div class="hist-row"><div class="hist-label">1.838 ms – 1.895 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.8%"></div></div><div class="hist-count">16</div></div>
+<div class="hist-row"><div class="hist-label">1.895 ms – 1.952 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.1%"></div></div><div class="hist-count">12</div></div>
+<div class="hist-row"><div class="hist-label">1.952 ms – 2.008 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.9%"></div></div><div class="hist-count">11</div></div>
+<div class="hist-row"><div class="hist-label">2.008 ms – 2.065 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.4%"></div></div><div class="hist-count">14</div></div>
+<div class="hist-row"><div class="hist-label">2.065 ms – 2.121 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.2%"></div></div><div class="hist-count">7</div></div>
+<div class="hist-row"><div class="hist-label">2.121 ms – 2.178 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">2.178 ms – 2.235 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">2.235 ms – 2.291 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">5</div></div>
+<div class="hist-row"><div class="hist-label">2.291 ms – 2.348 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">2.348 ms – 2.404 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">2.404 ms – 2.461 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">2.461 ms – 2.518 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+</div></details><details><summary>RL_Sim::RunModel — 1551 samples, max 1.269 ms</summary><table><tr><th>count</th><th>min</th><th>median</th><th>mean</th><th>p95</th><th>p99</th><th>p99.9</th><th>max</th><th>stdev</th></tr><tr><td>1551</td><td>343.983 µs</td><td>631.505 µs</td><td>648.888 µs</td><td>855.626 µs</td><td>944.957 µs</td><td>1.115 ms</td><td>1.269 ms</td><td>115.467 µs</td></tr></table><div class="hist">
+<div class="hist-row"><div class="hist-label">343.983 µs – 374.819 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:14.7%"></div></div><div class="hist-count">45</div></div>
+<div class="hist-row"><div class="hist-label">374.819 µs – 405.655 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:8.8%"></div></div><div class="hist-count">27</div></div>
+<div class="hist-row"><div class="hist-label">405.655 µs – 436.491 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.3%"></div></div><div class="hist-count">4</div></div>
+<div class="hist-row"><div class="hist-label">436.491 µs – 467.326 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:9.5%"></div></div><div class="hist-count">29</div></div>
+<div class="hist-row"><div class="hist-label">467.326 µs – 498.162 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.6%"></div></div><div class="hist-count">17</div></div>
+<div class="hist-row"><div class="hist-label">498.162 µs – 528.998 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.6%"></div></div><div class="hist-count">14</div></div>
+<div class="hist-row"><div class="hist-label">528.998 µs – 559.834 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.3%"></div></div><div class="hist-count">10</div></div>
+<div class="hist-row"><div class="hist-label">559.834 µs – 590.670 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:84.6%"></div></div><div class="hist-count">259</div></div>
+<div class="hist-row"><div class="hist-label">590.670 µs – 621.506 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:100.0%"></div></div><div class="hist-count">306</div></div>
+<div class="hist-row"><div class="hist-label">621.506 µs – 652.342 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:54.2%"></div></div><div class="hist-count">166</div></div>
+<div class="hist-row"><div class="hist-label">652.342 µs – 683.178 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:53.9%"></div></div><div class="hist-count">165</div></div>
+<div class="hist-row"><div class="hist-label">683.178 µs – 714.013 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:41.5%"></div></div><div class="hist-count">127</div></div>
+<div class="hist-row"><div class="hist-label">714.013 µs – 744.849 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:28.8%"></div></div><div class="hist-count">88</div></div>
+<div class="hist-row"><div class="hist-label">744.849 µs – 775.685 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:39.5%"></div></div><div class="hist-count">121</div></div>
+<div class="hist-row"><div class="hist-label">775.685 µs – 806.521 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:13.4%"></div></div><div class="hist-count">41</div></div>
+<div class="hist-row"><div class="hist-label">806.521 µs – 837.357 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.8%"></div></div><div class="hist-count">33</div></div>
+<div class="hist-row"><div class="hist-label">837.357 µs – 868.193 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.8%"></div></div><div class="hist-count">33</div></div>
+<div class="hist-row"><div class="hist-label">868.193 µs – 899.029 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.8%"></div></div><div class="hist-count">33</div></div>
+<div class="hist-row"><div class="hist-label">899.029 µs – 929.864 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.2%"></div></div><div class="hist-count">16</div></div>
+<div class="hist-row"><div class="hist-label">929.864 µs – 960.700 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+<div class="hist-row"><div class="hist-label">960.700 µs – 991.536 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.3%"></div></div><div class="hist-count">7</div></div>
+<div class="hist-row"><div class="hist-label">991.536 µs – 1.022 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.022 ms – 1.053 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.3%"></div></div><div class="hist-count">4</div></div>
+<div class="hist-row"><div class="hist-label">1.053 ms – 1.084 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+<div class="hist-row"><div class="hist-label">1.084 ms – 1.115 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.115 ms – 1.146 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.146 ms – 1.177 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">1.177 ms – 1.207 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.207 ms – 1.238 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.238 ms – 1.269 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+</div></details><details><summary>RL_Sim::SetCommand — 2998 samples, max 1.228 ms</summary><table><tr><th>count</th><th>min</th><th>median</th><th>mean</th><th>p95</th><th>p99</th><th>p99.9</th><th>max</th><th>stdev</th></tr><tr><td>2998</td><td>504.614 µs</td><td>548.413 µs</td><td>628.352 µs</td><td>918.456 µs</td><td>966.900 µs</td><td>1.101 ms</td><td>1.228 ms</td><td>134.594 µs</td></tr></table><div class="hist">
+<div class="hist-row"><div class="hist-label">504.614 µs – 528.719 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:100.0%"></div></div><div class="hist-count">1196</div></div>
+<div class="hist-row"><div class="hist-label">528.719 µs – 552.824 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:29.6%"></div></div><div class="hist-count">354</div></div>
+<div class="hist-row"><div class="hist-label">552.824 µs – 576.928 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:12.1%"></div></div><div class="hist-count">145</div></div>
+<div class="hist-row"><div class="hist-label">576.928 µs – 601.033 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.3%"></div></div><div class="hist-count">51</div></div>
+<div class="hist-row"><div class="hist-label">601.033 µs – 625.138 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.6%"></div></div><div class="hist-count">55</div></div>
+<div class="hist-row"><div class="hist-label">625.138 µs – 649.243 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.3%"></div></div><div class="hist-count">52</div></div>
+<div class="hist-row"><div class="hist-label">649.243 µs – 673.348 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:11.0%"></div></div><div class="hist-count">132</div></div>
+<div class="hist-row"><div class="hist-label">673.348 µs – 697.453 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:8.4%"></div></div><div class="hist-count">100</div></div>
+<div class="hist-row"><div class="hist-label">697.453 µs – 721.558 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:8.9%"></div></div><div class="hist-count">106</div></div>
+<div class="hist-row"><div class="hist-label">721.558 µs – 745.662 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.6%"></div></div><div class="hist-count">55</div></div>
+<div class="hist-row"><div class="hist-label">745.662 µs – 769.767 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:20.6%"></div></div><div class="hist-count">246</div></div>
+<div class="hist-row"><div class="hist-label">769.767 µs – 793.872 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:9.4%"></div></div><div class="hist-count">113</div></div>
+<div class="hist-row"><div class="hist-label">793.872 µs – 817.977 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.2%"></div></div><div class="hist-count">86</div></div>
+<div class="hist-row"><div class="hist-label">817.977 µs – 842.082 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.4%"></div></div><div class="hist-count">53</div></div>
+<div class="hist-row"><div class="hist-label">842.082 µs – 866.187 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.1%"></div></div><div class="hist-count">37</div></div>
+<div class="hist-row"><div class="hist-label">866.187 µs – 890.291 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.8%"></div></div><div class="hist-count">45</div></div>
+<div class="hist-row"><div class="hist-label">890.291 µs – 914.396 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.4%"></div></div><div class="hist-count">17</div></div>
+<div class="hist-row"><div class="hist-label">914.396 µs – 938.501 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.6%"></div></div><div class="hist-count">67</div></div>
+<div class="hist-row"><div class="hist-label">938.501 µs – 962.606 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.4%"></div></div><div class="hist-count">53</div></div>
+<div class="hist-row"><div class="hist-label">962.606 µs – 986.711 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.5%"></div></div><div class="hist-count">18</div></div>
+<div class="hist-row"><div class="hist-label">986.711 µs – 1.011 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">7</div></div>
+<div class="hist-row"><div class="hist-label">1.011 ms – 1.035 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">1.035 ms – 1.059 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+<div class="hist-row"><div class="hist-label">1.059 ms – 1.083 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.083 ms – 1.107 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+<div class="hist-row"><div class="hist-label">1.107 ms – 1.131 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.131 ms – 1.155 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">1.155 ms – 1.180 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">1.180 ms – 1.204 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">1.204 ms – 1.228 ms</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+</div></details><details><summary>RL_Sim::GetState — 2998 samples, max 958.517 µs</summary><table><tr><th>count</th><th>min</th><th>median</th><th>mean</th><th>p95</th><th>p99</th><th>p99.9</th><th>max</th><th>stdev</th></tr><tr><td>2998</td><td>308.622 µs</td><td>469.524 µs</td><td>487.781 µs</td><td>697.672 µs</td><td>860.586 µs</td><td>956.499 µs</td><td>958.517 µs</td><td>153.874 µs</td></tr></table><div class="hist">
+<div class="hist-row"><div class="hist-label">308.622 µs – 330.285 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:100.0%"></div></div><div class="hist-count">795</div></div>
+<div class="hist-row"><div class="hist-label">330.285 µs – 351.948 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:37.7%"></div></div><div class="hist-count">300</div></div>
+<div class="hist-row"><div class="hist-label">351.948 µs – 373.611 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.9%"></div></div><div class="hist-count">47</div></div>
+<div class="hist-row"><div class="hist-label">373.611 µs – 395.275 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.9%"></div></div><div class="hist-count">23</div></div>
+<div class="hist-row"><div class="hist-label">395.275 µs – 416.938 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.6%"></div></div><div class="hist-count">21</div></div>
+<div class="hist-row"><div class="hist-label">416.938 µs – 438.601 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.4%"></div></div><div class="hist-count">27</div></div>
+<div class="hist-row"><div class="hist-label">438.601 µs – 460.264 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:9.1%"></div></div><div class="hist-count">72</div></div>
+<div class="hist-row"><div class="hist-label">460.264 µs – 481.927 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:43.6%"></div></div><div class="hist-count">347</div></div>
+<div class="hist-row"><div class="hist-label">481.927 µs – 503.591 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.9%"></div></div><div class="hist-count">63</div></div>
+<div class="hist-row"><div class="hist-label">503.591 µs – 525.254 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.9%"></div></div><div class="hist-count">87</div></div>
+<div class="hist-row"><div class="hist-label">525.254 µs – 546.917 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:6.5%"></div></div><div class="hist-count">52</div></div>
+<div class="hist-row"><div class="hist-label">546.917 µs – 568.580 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.7%"></div></div><div class="hist-count">61</div></div>
+<div class="hist-row"><div class="hist-label">568.580 µs – 590.243 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.8%"></div></div><div class="hist-count">62</div></div>
+<div class="hist-row"><div class="hist-label">590.243 µs – 611.906 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:4.8%"></div></div><div class="hist-count">38</div></div>
+<div class="hist-row"><div class="hist-label">611.906 µs – 633.569 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:36.0%"></div></div><div class="hist-count">286</div></div>
+<div class="hist-row"><div class="hist-label">633.569 µs – 655.233 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:50.7%"></div></div><div class="hist-count">403</div></div>
+<div class="hist-row"><div class="hist-label">655.233 µs – 676.896 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:9.4%"></div></div><div class="hist-count">75</div></div>
+<div class="hist-row"><div class="hist-label">676.896 µs – 698.559 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:11.3%"></div></div><div class="hist-count">90</div></div>
+<div class="hist-row"><div class="hist-label">698.559 µs – 720.222 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.6%"></div></div><div class="hist-count">21</div></div>
+<div class="hist-row"><div class="hist-label">720.222 µs – 741.885 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">741.885 µs – 763.548 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">5</div></div>
+<div class="hist-row"><div class="hist-label">763.548 µs – 785.212 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.1%"></div></div><div class="hist-count">17</div></div>
+<div class="hist-row"><div class="hist-label">785.212 µs – 806.875 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.1%"></div></div><div class="hist-count">9</div></div>
+<div class="hist-row"><div class="hist-label">806.875 µs – 828.538 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.8%"></div></div><div class="hist-count">22</div></div>
+<div class="hist-row"><div class="hist-label">828.538 µs – 850.201 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.5%"></div></div><div class="hist-count">28</div></div>
+<div class="hist-row"><div class="hist-label">850.201 µs – 871.864 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.4%"></div></div><div class="hist-count">19</div></div>
+<div class="hist-row"><div class="hist-label">871.864 µs – 893.528 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">6</div></div>
+<div class="hist-row"><div class="hist-label">893.528 µs – 915.191 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">915.191 µs – 936.854 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+<div class="hist-row"><div class="hist-label">936.854 µs – 958.517 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.0%"></div></div><div class="hist-count">16</div></div>
+</div></details><details><summary>RL_Sim::Forward — 1551 samples, max 743.655 µs</summary><table><tr><th>count</th><th>min</th><th>median</th><th>mean</th><th>p95</th><th>p99</th><th>p99.9</th><th>max</th><th>stdev</th></tr><tr><td>1551</td><td>227.792 µs</td><td>433.753 µs</td><td>444.947 µs</td><td>595.585 µs</td><td>656.970 µs</td><td>707.010 µs</td><td>743.655 µs</td><td>80.812 µs</td></tr></table><div class="hist">
+<div class="hist-row"><div class="hist-label">227.792 µs – 244.987 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:12.8%"></div></div><div class="hist-count">33</div></div>
+<div class="hist-row"><div class="hist-label">244.987 µs – 262.183 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.4%"></div></div><div class="hist-count">19</div></div>
+<div class="hist-row"><div class="hist-label">262.183 µs – 279.378 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.4%"></div></div><div class="hist-count">19</div></div>
+<div class="hist-row"><div class="hist-label">279.378 µs – 296.574 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.9%"></div></div><div class="hist-count">5</div></div>
+<div class="hist-row"><div class="hist-label">296.574 µs – 313.769 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.8%"></div></div><div class="hist-count">20</div></div>
+<div class="hist-row"><div class="hist-label">313.769 µs – 330.965 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.8%"></div></div><div class="hist-count">20</div></div>
+<div class="hist-row"><div class="hist-label">330.965 µs – 348.160 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.4%"></div></div><div class="hist-count">14</div></div>
+<div class="hist-row"><div class="hist-label">348.160 µs – 365.355 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.1%"></div></div><div class="hist-count">8</div></div>
+<div class="hist-row"><div class="hist-label">365.355 µs – 382.551 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:6.2%"></div></div><div class="hist-count">16</div></div>
+<div class="hist-row"><div class="hist-label">382.551 µs – 399.746 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:83.7%"></div></div><div class="hist-count">215</div></div>
+<div class="hist-row"><div class="hist-label">399.746 µs – 416.942 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:100.0%"></div></div><div class="hist-count">257</div></div>
+<div class="hist-row"><div class="hist-label">416.942 µs – 434.137 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:59.5%"></div></div><div class="hist-count">153</div></div>
+<div class="hist-row"><div class="hist-label">434.137 µs – 451.333 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:43.6%"></div></div><div class="hist-count">112</div></div>
+<div class="hist-row"><div class="hist-label">451.333 µs – 468.528 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:28.0%"></div></div><div class="hist-count">72</div></div>
+<div class="hist-row"><div class="hist-label">468.528 µs – 485.724 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:62.3%"></div></div><div class="hist-count">160</div></div>
+<div class="hist-row"><div class="hist-label">485.724 µs – 502.919 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:47.1%"></div></div><div class="hist-count">121</div></div>
+<div class="hist-row"><div class="hist-label">502.919 µs – 520.114 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:37.4%"></div></div><div class="hist-count">96</div></div>
+<div class="hist-row"><div class="hist-label">520.114 µs – 537.310 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:17.5%"></div></div><div class="hist-count">45</div></div>
+<div class="hist-row"><div class="hist-label">537.310 µs – 554.505 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.9%"></div></div><div class="hist-count">28</div></div>
+<div class="hist-row"><div class="hist-label">554.505 µs – 571.701 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:7.0%"></div></div><div class="hist-count">18</div></div>
+<div class="hist-row"><div class="hist-label">571.701 µs – 588.896 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:8.6%"></div></div><div class="hist-count">22</div></div>
+<div class="hist-row"><div class="hist-label">588.896 µs – 606.092 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:16.3%"></div></div><div class="hist-count">42</div></div>
+<div class="hist-row"><div class="hist-label">606.092 µs – 623.287 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:9.7%"></div></div><div class="hist-count">25</div></div>
+<div class="hist-row"><div class="hist-label">623.287 µs – 640.482 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.1%"></div></div><div class="hist-count">8</div></div>
+<div class="hist-row"><div class="hist-label">640.482 µs – 657.678 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.7%"></div></div><div class="hist-count">7</div></div>
+<div class="hist-row"><div class="hist-label">657.678 µs – 674.873 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.7%"></div></div><div class="hist-count">7</div></div>
+<div class="hist-row"><div class="hist-label">674.873 µs – 692.069 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.7%"></div></div><div class="hist-count">7</div></div>
+<div class="hist-row"><div class="hist-label">692.069 µs – 709.264 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">709.264 µs – 726.460 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">726.460 µs – 743.655 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+</div></details><details><summary>RL_Sim::GazeboImuCallback — 2998 samples, max 6.190 µs</summary><table><tr><th>count</th><th>min</th><th>median</th><th>mean</th><th>p95</th><th>p99</th><th>p99.9</th><th>max</th><th>stdev</th></tr><tr><td>2998</td><td>600 ns</td><td>1.260 µs</td><td>1.391 µs</td><td>2.412 µs</td><td>3.670 µs</td><td>5.441 µs</td><td>6.190 µs</td><td>542 ns</td></tr></table><div class="hist">
+<div class="hist-row"><div class="hist-label">600 ns – 786 ns</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:12.9%"></div></div><div class="hist-count">124</div></div>
+<div class="hist-row"><div class="hist-label">786 ns – 973 ns</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:22.8%"></div></div><div class="hist-count">219</div></div>
+<div class="hist-row"><div class="hist-label">973 ns – 1.159 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:62.2%"></div></div><div class="hist-count">598</div></div>
+<div class="hist-row"><div class="hist-label">1.159 µs – 1.345 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:100.0%"></div></div><div class="hist-count">961</div></div>
+<div class="hist-row"><div class="hist-label">1.345 µs – 1.532 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:46.1%"></div></div><div class="hist-count">443</div></div>
+<div class="hist-row"><div class="hist-label">1.532 µs – 1.718 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:18.1%"></div></div><div class="hist-count">174</div></div>
+<div class="hist-row"><div class="hist-label">1.718 µs – 1.904 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:13.4%"></div></div><div class="hist-count">129</div></div>
+<div class="hist-row"><div class="hist-label">1.904 µs – 2.091 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:10.3%"></div></div><div class="hist-count">99</div></div>
+<div class="hist-row"><div class="hist-label">2.091 µs – 2.277 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:6.5%"></div></div><div class="hist-count">62</div></div>
+<div class="hist-row"><div class="hist-label">2.277 µs – 2.463 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:5.7%"></div></div><div class="hist-count">55</div></div>
+<div class="hist-row"><div class="hist-label">2.463 µs – 2.650 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:3.6%"></div></div><div class="hist-count">35</div></div>
+<div class="hist-row"><div class="hist-label">2.650 µs – 2.836 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.3%"></div></div><div class="hist-count">22</div></div>
+<div class="hist-row"><div class="hist-label">2.836 µs – 3.022 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:2.1%"></div></div><div class="hist-count">20</div></div>
+<div class="hist-row"><div class="hist-label">3.022 µs – 3.209 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">10</div></div>
+<div class="hist-row"><div class="hist-label">3.209 µs – 3.395 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">5</div></div>
+<div class="hist-row"><div class="hist-label">3.395 µs – 3.581 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">8</div></div>
+<div class="hist-row"><div class="hist-label">3.581 µs – 3.768 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">6</div></div>
+<div class="hist-row"><div class="hist-label">3.768 µs – 3.954 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">8</div></div>
+<div class="hist-row"><div class="hist-label">3.954 µs – 4.140 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">4</div></div>
+<div class="hist-row"><div class="hist-label">4.140 µs – 4.327 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">4.327 µs – 4.513 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">4.513 µs – 4.699 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">3</div></div>
+<div class="hist-row"><div class="hist-label">4.699 µs – 4.886 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">4.886 µs – 5.072 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+<div class="hist-row"><div class="hist-label">5.072 µs – 5.258 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">5.258 µs – 5.445 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">5.445 µs – 5.631 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">5.631 µs – 5.817 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">1</div></div>
+<div class="hist-row"><div class="hist-label">5.817 µs – 6.004 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:0.0%"></div></div><div class="hist-count">0</div></div>
+<div class="hist-row"><div class="hist-label">6.004 µs – 6.190 µs</div><div class="hist-bar-wrap"><div class="hist-bar" style="width:1.0%"></div></div><div class="hist-count">2</div></div>
+</div></details>
+
+</body>
+</html>

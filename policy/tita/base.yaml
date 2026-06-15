@@ -27,4 +27,8 @@ tita:
   joint_controller_names: ["R_hip_controller", "R_thigh_controller", "R_calf_controller",
                            "L_hip_controller", "L_thigh_controller", "L_calf_controller",
                            "R_foot_controller", "L_foot_controller"]
+  transition_duration:
+    pre_running_pos: 1.0
+    default_dof_pos: 2.0
+
   joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7]

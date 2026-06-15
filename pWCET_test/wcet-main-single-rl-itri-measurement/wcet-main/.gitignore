@@ -1,0 +1,36 @@
+# cached callback locations
+__pycache__
+.measure_et_cache.json
+.measure_ets_cache.json
+.measure_hz_cache.json
+.measure_hzs_cache.json
+.measure_malloc_pattern.json
+.measure_malloc_patterns.json
+.measure_page_fault_cache.json
+.measure_page_faults_cache.json
+.measure_malloc_as_histogram.json
+.measure_malloc_as_histogram_multi_cb.json
+.trace_et_cache.json
+.trace_ets_cache.json
+
+# rendered ebpf source code
+.ebpf_ets.c
+.ebpf_hzs.c
+.ebpf_malloc_patterns.c
+.ebpf_page_faults.c
+.ebpf_trace_ets.c
+
+# profiling execution time
+sampled_execution_time/*.json
+
+# log files
+*.log
+report
+compared_reports
+page_faults.csv
+
+# vim temp files
+*.swp
+
+# trace file
+trace.json

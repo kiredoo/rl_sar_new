@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- Template used by compare_two_reports.py -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <link rel="stylesheet" href="dataTables.bootstrap5.min.css" />
+    <script src="jquery.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
+    <title>Compare two reports</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h3>Comparison of two reports</h3>
+      <ul>
+        <li>Before: {{before_dir}}</li>
+        <li>After: {{ after_dir }}</li>
+      </ul>
+
+       <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th></th>
+            <th>Weighted avg (ms)</th>
+            <th>Weighted CV</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Before (B)</td>
+            <td>{{weighted_stat_before.avg_ms | round(3)}}</td>
+            <td>{{weighted_stat_before.cv | round(3)}}</td>
+          </tr>
+
+          <tr>
+            <td>After (A)</td>
+            <td>{{weighted_stat_after.avg_ms | round(3)}}</td>
+            <td>{{weighted_stat_after.cv | round(3)}}</td>
+          </tr>
+
+
+          <tr>
+            <td>Improvement (= 1 - A/B)</td>
+            {% if weighted_stat_before.avg_ms != 0 and weighted_stat_before.cv != 0 %}
+            <td>{{ "%.02f" | format((1 - weighted_stat_after.avg_ms / weighted_stat_before.avg_ms)  * 100) }}%</td>
+            <td>{{ "%.02f" | format((1 - weighted_stat_after.cv / weighted_stat_before.cv)  * 100) }}%</td>
+            {% else %}
+            <td>NA</td>
+            <td>NA</td>
+            {% endif %}
+        </tbody>
+      </table>
+
+      <hr>
+      {% for cb in cbs %}
+      <h3>{{cb.name}}</h3>
+      <table class="table">
+        <thead class="table-light">
+          <tr>
+            <th></th>
+            <th>#measurements</th>
+            <th>min (ms)</th>
+            <th>avg (ms)</th>
+            <th>max (ms)</th>
+            <th>stdev </th>
+            <th>CV</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td> Before (B)</td>
+            <td>{{ cb.num_measurements_before }}</td>
+            <td>{{ cb.min_ms_before | round(3) }}</td>
+            <td>{{ cb.avg_ms_before | round(3) }}</td>
+            <td>{{ cb.max_ms_before | round(3) }}</td>
+            <td>{{ cb.stdev_before | round(3) }}</td>
+            <td>{{ cb.cv_before | round(3) }}</td>
+          </tr>
+          <tr>
+            <td> After (A)</td>
+            <td>{{ cb.num_measurements_after }}</td>
+            <td>{{ cb.min_ms_after | round(3) }}</td>
+            <td>{{ cb.avg_ms_after | round(3) }}</td>
+            <td>{{ cb.max_ms_after | round(3) }}</td>
+            <td>{{ cb.stdev_after | round(3) }}</td>
+            <td>{{ cb.cv_after | round(3) }}</td>
+          </tr>
+
+          <tr>
+            <td> Improvement (= 1 - A/B)</td>
+            <td></td>
+            <td>{{ "%.02f" | format(cb.min_ms_improve * 100) }}%</td>
+            <td>{{ "%.02f" | format(cb.avg_ms_improve * 100) }}%</td>
+            <td>{{ "%.02f" | format(cb.max_ms_improve * 100) }}%</td>
+            <td>{{ "%.02f" | format(cb.stdev_improve * 100) }}%</td>
+            <td>{{ "%.02f" | format(cb.cv_improve * 100) }}%</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr>
+      {% endfor %}
+
+    </div>
+    <!-- container -->
+  </body>
+</html>

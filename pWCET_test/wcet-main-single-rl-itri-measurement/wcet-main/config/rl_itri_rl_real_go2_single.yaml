@@ -1,0 +1,15 @@
+target:
+  # rl_real_go2 requires a network interface argument.
+  # Change eth0 to the interface used by the robot PC, for example eno1 or enp3s0.
+  command: ros2 run rl_ITRI rl_real_go2 eth0
+  log_filename: rl_itri_rl_real_go2_target.log
+  ready_sleep_seconds: 10.0
+  shutdown_on_finish: true
+
+measurement:
+  callback_names_txt: ../cb_names/rl_itri_rl_real_go2_functions.txt
+  # If no symbol is found, try "rl_real_go2" or your install/build path substring.
+  elf_path_must_contain: rl_ITRI
+  duration_seconds: 30.0
+  ignore_cache: true
+  wait_ebpf_timeout_seconds: 30.0

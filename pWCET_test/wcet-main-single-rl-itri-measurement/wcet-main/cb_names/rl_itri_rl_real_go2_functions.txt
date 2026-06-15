@@ -1,0 +1,14 @@
+# RL_ITRI rl_real_go2 candidate functions / ROS 2 callbacks.
+# For ROS 2 builds, CmdvelCallback is present only when USE_ROS2 and USE_ROS are enabled.
+RL_Real::RobotControl
+RL_Real::RunModel
+RL_Real::Forward
+RL_Real::CmdvelCallback
+RL_Real::LowStateMessageHandler
+RL_Real::JoystickHandler
+RL_Real::GetState
+RL_Real::SetCommand
+RL_Real::Crc32Core
+RL_Real::QueryMotionStatus
+RL_Real::QueryServiceName
+RL_Real::InitLowCmd

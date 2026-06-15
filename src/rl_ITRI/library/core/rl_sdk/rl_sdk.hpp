@@ -289,6 +289,8 @@ public:
         bool use_fixed_gains = true
     );
 
+    float GetTransitionDuration(const std::string& key, float default_value) const;
+
     void RLControl();
 };
 

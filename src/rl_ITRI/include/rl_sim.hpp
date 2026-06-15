@@ -33,6 +33,7 @@
 #include <gazebo_msgs/ModelStates.h>
 #include "robot_msgs/MotorCommand.h"
 #include "robot_msgs/MotorState.h"
+#include <std_msgs/Float32MultiArray.h>
 #elif defined(USE_ROS2)
 #include "robot_msgs/msg/robot_command.hpp"
 #include "robot_msgs/msg/robot_state.hpp"
@@ -43,6 +44,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <rcl_interfaces/srv/get_parameters.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 #endif
 
 #include "matplotlibcpp.h"
@@ -85,9 +87,11 @@ private:
     geometry_msgs::Pose pose;
     geometry_msgs::Twist cmd_vel;
     sensor_msgs::Joy joy_msg;
+    std_msgs::Float32MultiArray depth_data;
     ros::Subscriber model_state_subscriber;
     ros::Subscriber cmd_vel_subscriber;
     ros::Subscriber joy_subscriber;
+    ros::Subscriber depth_subscriber;
     ros::ServiceClient gazebo_pause_physics_client;
     ros::ServiceClient gazebo_unpause_physics_client;
     ros::ServiceClient gazebo_reset_world_client;
@@ -98,16 +102,19 @@ private:
     void JointStatesCallback(const robot_msgs::MotorState::ConstPtr &msg, const std::string &joint_controller_name);
     void CmdvelCallback(const geometry_msgs::Twist::ConstPtr &msg);
     void JoyCallback(const sensor_msgs::Joy::ConstPtr &msg);
+    void DepthCallback(const std_msgs::Float32MultiArray::ConstPtr &msg);
 #elif defined(USE_ROS2)
     sensor_msgs::msg::Imu gazebo_imu;
     geometry_msgs::msg::Twist cmd_vel;
     sensor_msgs::msg::Joy joy_msg;
+    std_msgs::msg::Float32MultiArray depth_data;
     robot_msgs::msg::RobotCommand robot_command_publisher_msg;
     robot_msgs::msg::RobotState robot_state_subscriber_msg;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr gazebo_imu_subscriber;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscriber;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber;
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscriber;
+    rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr depth_subscriber;
     rclcpp::Client<std_srvs::srv::Empty>::SharedPtr gazebo_pause_physics_client;
     rclcpp::Client<std_srvs::srv::Empty>::SharedPtr gazebo_unpause_physics_client;
     rclcpp::Client<std_srvs::srv::Empty>::SharedPtr gazebo_reset_world_client;
@@ -118,6 +125,7 @@ private:
     void CmdvelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
     void RobotStateCallback(const robot_msgs::msg::RobotState::SharedPtr msg);
     void JoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+    void DepthCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
 #endif
 
     // others

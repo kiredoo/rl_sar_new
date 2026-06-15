@@ -1,0 +1,44 @@
+autoware:
+  launch_package: autoware_launch
+  launch_file: logging_simulator.launch.xml
+  map_path: ~/autoware_map/sample-map-rosbag
+  rosbag_path: ~/autoware_map/sample-rosbag
+  vehicle_model: sample_vehicle
+  sensor_model: sample_sensor_kit
+  ready_timeout_seconds: 180
+  launch_extra_args: []
+
+sampling:
+  callback_names_txt: ../cb_names/callbacks.txt
+  num_sampling: 0
+  cool_down_seconds: 60
+  ld_preload: null
+
+measurement:
+  elf_path_must_contain: autoware
+  bag_play_rate_x86: 1.0
+  bag_play_rate_arm: 0.2
+  burn_in_seconds: 5.0
+  min_pause_seconds: 10.0
+  sample_duration_seconds_without_bag: 15.0
+
+cie:
+  enable: true
+  script: ~/aga/autoware_CIE_MP/src/callback_isolated_executor/scripts/rt_all_symlink.sh
+  yaml_path: ~/aga/autoware_CIE_MP/src/callback_isolated_executor/scripts/20251003_cbg304_25edf-cpu_190fifo90_89cfs_align-target-cp_tight-dl_caret-awu.yaml
+  expected_unapplied: 23
+  tmux_session: aga_wcet
+  tmux_window: cie
+  wait_ready_timeout_s: 180
+  finalize_timeout_s: 60
+  attach_on_start: true
+  terminal_candidates:
+    - gnome-terminal
+    - x-terminal-emulator
+    - konsole
+    - xfce4-terminal
+    - mate-terminal
+    - lxterminal
+    - alacritty
+    - kitty
+    - terminator

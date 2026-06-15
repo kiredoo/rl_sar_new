@@ -133,6 +133,10 @@ std::vector<float> RL::ComputeObservation()
         {
             obs_list.push_back(this->obs.actions);
         }
+        else if (observation == "depth_image")
+        {
+            obs_list.push_back(this->obs.depth_data);
+        }
         // ============= Other Observations =============
         else if (observation == "whole_body_tracking/motion_command")
         {
@@ -830,6 +834,23 @@ bool RLFSMState::Interpolate(
     }
 
     return true;
+}
+
+float RLFSMState::GetTransitionDuration(const std::string& key, float default_value) const
+{
+    const YAML::Node transition_duration = rl.params.config_node["transition_duration"];
+    if (!transition_duration || !transition_duration.IsMap())
+    {
+        return default_value;
+    }
+
+    const YAML::Node duration = transition_duration[key];
+    if (!duration)
+    {
+        return default_value;
+    }
+
+    return duration.as<float>();
 }
 
 void RLFSMState::RLControl()

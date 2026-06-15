@@ -59,6 +59,7 @@ def generate_launch_description():
             "-topic", "/robot_description",
             "-entity", "robot_model",
             "-z", "1.0",
+            "-R", "3.14159",
         ],
         output="screen",
     )
@@ -107,7 +108,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "wname",
             description="World name (without .world extension)",
-            default_value=TextSubstitution(text="stairs"),
+            default_value=TextSubstitution(text="stairs_level_2_to_5"),
         ),
         robot_state_publisher_node,
         gazebo,

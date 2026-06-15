@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- Template used by aggreate_cb_to_module.py -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <link rel="stylesheet" href="dataTables.bootstrap5.min.css" />
+    <script src="jquery.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="dataTables.js"></script>
+    <script src="dataTables.bootstrap5.js"></script>
+    <title>Resources consumed by callbacks and modules</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Resources Consumed by Callbacks/Modules</h1>
+      <ul>
+        <li>We measure resource consumption on a callback basis. We first focus on the CPU utility.</li>
+        <li>CPU utility = execution_time_in_seconds / (1 / HZ) = execution_time_in_milliseconds * HZ / 1000.</li>
+        <li>The execution time (ET) is measured in NVidia Jetson Orin. The worst case execution time (WCET) is estimated by the extreme value theory. Please note that WCET is not always fitted well.</li>
+        <li>ET is measured by uprobe/kprobe. Probes cannot distinguish CPU computation from GPU computation. If a callback involves GPU computation, then its CPU utility estimation is unreliable.</li>
+      </ul>
+      <hr>
+
+      <h3>Callbacks</h3>
+      <table id="cb_table" class="table">
+        <thead class="table-light">
+          <tr>
+            <th>name</th>
+            <th>HZ</th>
+            <th>Avg ET (ms)</th>
+            <th>WCET (ms)</th>
+            <th>CPU utility <br> (avg version)</th>
+            <th>CPU utility <br> (wcet version)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cb in cb_resources %}
+          <tr>
+            <td>{{ cb.name }}</td>
+            <td>{{ cb.hz }}</td>
+            <td>{{ cb.avg_et_ms | round(3) }}</td>
+            <td>{{ cb.wcet_ms | round(3) }}</td>
+            <td>{{ cb.cpu_utility_avg | round(3) }}</td>
+            <td>{{ cb.cpu_utility_wcet | round(3) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <hr>
+
+      <h3>Modules</h3>
+      <table id="module_table" class="table">
+        <thead class="table-light">
+          <tr>
+            <th>name</th>
+            <th>CPU utility <br> (avg version)</th>
+            <th>CPU utility <br> (wcet version)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for module in module_resources %}
+          <tr>
+            <td>{{ module.name }}</td>
+            <td>{{ module.cpu_utility_avg | round(3) }}</td>
+            <td>{{ module.cpu_utility_wcet | round(3) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <hr>
+
+
+
+    </div>
+    <!-- container -->
+    <script>
+      new DataTable("#cb_table", {paging: true, pageLength: 10, info: true, searching: true});
+      new DataTable("#module_table", {paging: true, pageLength: 10, info: true, searching: true});
+    </script>
+  </body>
+</html>

@@ -62,7 +62,7 @@ public:
 
     void Run() override
     {
-        Interpolate(percent_getup, rl.now_state.motor_state.q, rl.params.Get<std::vector<float>>("default_dof_pos"), 2.0f, "Getting up", true);
+        Interpolate(percent_getup, rl.now_state.motor_state.q, rl.params.Get<std::vector<float>>("default_dof_pos"), GetTransitionDuration("default_dof_pos", 2.0f), "Getting up", true);
     }
 
     void Exit() override {}

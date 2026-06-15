@@ -1,0 +1,17 @@
+#!/usr/bin/env bpftrace
+
+BEGIN {
+  printf("ts,event,tid,other\n");
+}
+
+tracepoint:sched:sched_wakeup /args->pid == 3422732 || args->pid == 3422737 || args->pid == 3422738 || args->pid == 3422739 || args->pid == 3422740 || args->pid == 3422741 || args->pid == 3422742 || args->pid == 3422743 || args->pid == 3422744 || args->pid == 3422745 || args->pid == 3422746 || args->pid == 3422890 || args->pid == 3422891 || args->pid == 3422892/ {
+  printf("%llu,wakeup,%d,0\n", nsecs, args->pid);
+}
+
+tracepoint:sched:sched_switch /args->next_pid == 3422732 || args->next_pid == 3422737 || args->next_pid == 3422738 || args->next_pid == 3422739 || args->next_pid == 3422740 || args->next_pid == 3422741 || args->next_pid == 3422742 || args->next_pid == 3422743 || args->next_pid == 3422744 || args->next_pid == 3422745 || args->next_pid == 3422746 || args->next_pid == 3422890 || args->next_pid == 3422891 || args->next_pid == 3422892/ {
+  printf("%llu,switch_in,%d,%d\n", nsecs, args->next_pid, args->prev_pid);
+}
+
+tracepoint:sched:sched_switch /args->prev_pid == 3422732 || args->prev_pid == 3422737 || args->prev_pid == 3422738 || args->prev_pid == 3422739 || args->prev_pid == 3422740 || args->prev_pid == 3422741 || args->prev_pid == 3422742 || args->prev_pid == 3422743 || args->prev_pid == 3422744 || args->prev_pid == 3422745 || args->prev_pid == 3422746 || args->prev_pid == 3422890 || args->prev_pid == 3422891 || args->prev_pid == 3422892/ {
+  printf("%llu,switch_out,%d,%d\n", nsecs, args->prev_pid, args->next_pid);
+}

@@ -57,5 +57,8 @@ go2/extreme_parkour:
                       0.1000, 0.8000, -1.5000,
                      -0.1000, 1.0000, -1.5000,
                       0.1000, 1.0000, -1.5000]
+  transition_duration:
+    default_dof_pos: 2.0
+
   joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] # confirmed by Extreme-Parkour-Onboard actions
   # inject_actions: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # force robot follow this action (only for sim debug)

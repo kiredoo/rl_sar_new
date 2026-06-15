@@ -6,6 +6,8 @@
 #include "rl_sim_parkour.hpp"
 #include <cmath>
 #include <algorithm>
+#include <cstdlib>
+#include <sstream>
 // #define PLOT
 
 RL_Sim::RL_Sim(int argc, char **argv)
@@ -273,6 +275,21 @@ void RL_Sim::StartJointController(const std::string& ros_namespace, const std::v
     pid_t pid = fork();
     if (pid == 0)
     {
+        // Filter noetic paths from PYTHONPATH to prevent ROS1/ROS2 module conflicts
+        const char* orig_pypath = std::getenv("PYTHONPATH");
+        if (orig_pypath) {
+            std::stringstream ss(orig_pypath);
+            std::string entry, filtered;
+            bool first = true;
+            while (std::getline(ss, entry, ':')) {
+                if (entry.find("noetic") == std::string::npos) {
+                    if (!first) filtered += ":";
+                    filtered += entry;
+                    first = false;
+                }
+            }
+            setenv("PYTHONPATH", filtered.c_str(), 1);
+        }
         std::string cmd = "ros2 run controller_manager " + spawner + " robot_joint_controller ";
         cmd += "-p " + tmp_path.string() + " ";
         // cmd += " > /dev/null 2>&1";  // Comment this line to see the output

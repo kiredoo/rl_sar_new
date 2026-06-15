@@ -1,0 +1,1 @@
+DEFAULT_FIG_SIZE = (6, 4)

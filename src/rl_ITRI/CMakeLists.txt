@@ -17,9 +17,9 @@ endif()
 
 if(NOT USE_CMAKE)
     if($ENV{ROS_DISTRO} MATCHES "noetic")
-        add_compile_definitions(USE_ROS1)
+        add_compile_definitions(USE_ROS1 USE_ROS)
     elseif($ENV{ROS_DISTRO} MATCHES "foxy|humble")
-        add_compile_definitions(USE_ROS2)
+        add_compile_definitions(USE_ROS2 USE_ROS)
     endif()
 else()
     message(WARNING "ROS_DISTRO not set, assuming non-ROS mode")
@@ -333,6 +333,13 @@ if(NOT USE_CMAKE)
         include_directories(${catkin_INCLUDE_DIRS})
     endif()
 endif()
+
+# --- 請加入以下這段 (強制優先使用 Unitree SDK 2 的 DDS 標頭檔) ---
+include_directories(BEFORE
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/unitree/unitree_sdk2/thirdparty/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/library/thirdparty/robot_sdk/unitree/unitree_sdk2/include"
+)
+# ------------------------------------------------------------------
 
 include_directories(
     include

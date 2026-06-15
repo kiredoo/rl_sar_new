@@ -1,0 +1,11 @@
+# RL_ITRI rl_sim candidate functions / ROS 2 callbacks.
+# These are demangled names. measure_ets.py will locate the mangled symbol in the opened ELF.
+RL_Sim::RobotControl
+RL_Sim::RunModel
+RL_Sim::Forward
+RL_Sim::GazeboImuCallback
+RL_Sim::CmdvelCallback
+RL_Sim::RobotStateCallback
+RL_Sim::JoyCallback
+RL_Sim::GetState
+RL_Sim::SetCommand

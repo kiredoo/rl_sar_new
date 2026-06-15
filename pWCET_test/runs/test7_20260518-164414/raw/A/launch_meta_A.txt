@@ -1,0 +1,4 @@
+# arm=A
+# started_at=2026-05-21T15:19:44+08:00
+# allocator=glibc baseline
+# command=run_rl_sim_A.sh

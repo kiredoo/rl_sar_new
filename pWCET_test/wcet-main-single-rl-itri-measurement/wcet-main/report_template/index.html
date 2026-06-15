@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <link rel="stylesheet" href="dataTables.bootstrap5.min.css" />
+    <script src="jquery.js"></script>
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="dataTables.js"></script>
+    <script src="dataTables.bootstrap5.js"></script>
+    <title>WCET analysis of callback functions</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>WCET analysis of callback functions</h1>
+
+      <h3>System Info</h3>
+      <ul>
+        <li>hostname: {{system_info.hostname}}</li>
+        <li>machine_type: {{system_info.machine_type}}</li>
+        <li>cpu_count: {{system_info.cpu_count}}</li>
+        <li>min_cpu_freq_mhz: {{system_info.min_cpu_freq_mhz}}</li>
+        <li>max_cpu_freq_mhz: {{system_info.max_cpu_freq_mhz}}</li>
+        <li>RAM size: {{system_info.ram_size_gb}} GB</li>
+        <li>L1 cache: {{system_info.l1_cache_size}}</li>
+        <li>L2 cache: {{system_info.l2_cache_size}}</li>
+        <li>L3 cache: {{system_info.l3_cache_size}}</li>
+      </ul>
+      <p>ⓘ System Info is the computer that generates this report. It is not necessarily the computer that conducted the execution time measurement.</p>
+
+      <h3>Callback functions</h3>
+      <table id="cb_table" class="table">
+        <thead class="table-light">
+          <tr>
+            <th>Callback</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cb_wcet in cb_wcets %}
+          <tr>
+            <td><a href="#cb_{{ cb_wcet.name }}">{{ cb_wcet.name }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <hr>
+
+      {% for cb_wcet in cb_wcets %}
+      <div>
+        <h4 id="cb_{{ cb_wcet.name }}">📞	{{ cb_wcet.name }}</h4>
+        <br />
+        {%if cb_wcet.num_blocks > 0 %}
+        <div><a href="{{cb_wcet.block_maxima_filename}}">Block Maxima Values</a></div>
+        <div><a href="{{cb_wcet.execution_time_measurements_filename}}">Execution Time measurements</a></div>
+        <br />
+
+        <table class="table">
+          <tbody>
+            <tr class="table-light">
+              <th colspan="6" class="text-center">Statistics (raw data) <br>
+            </tr>
+            <tr>
+              <th>#measurements</th>
+              <th>min (ms)</th>
+              <th>avg (ms)</th>
+              <th>max (ms)</th>
+              <th>stdev</th>
+              <th>CV</th>
+            </tr>
+            <tr>
+              <td>{{ cb_wcet.num_execution_time_measurements }}</td>
+              <td>{{ cb_wcet.measurements_min_ms | round(3) }}</td>
+              <td>{{ cb_wcet.measurements_avg_ms | round(3) }}</td>
+              <td>{{ cb_wcet.measurements_max_ms | round(3) }}</td>
+              <td>{{ cb_wcet.measurements_stdev | round(3) }}</td>
+              <td>{{ cb_wcet.measurements_cv | round(3) }}</td>
+            </tr>
+
+            <tr class="table-light">
+              <th colspan="6" class="text-center">Statistics (block maxima) <br>
+            </tr>
+            <tr>
+              <th>#blocks</th>
+              <th>min (ms)</th>
+              <th>avg (ms)</th>
+              <th>max (ms)</th>
+              <th>stdev</th>
+              <th>CV</th>
+            </tr>
+            <tr>
+              <td>{{ cb_wcet.num_blocks }}</td>
+              <td>{{ cb_wcet.block_maxima_min_ms | round(3) }}</td>
+              <td>{{ cb_wcet.block_maxima_avg_ms | round(3) }}</td>
+              <td>{{ cb_wcet.block_maxima_max_ms | round(3) }}</td>
+              <td>{{ cb_wcet.block_maxima_stdev | round(3) }}</td>
+              <td>{{ cb_wcet.block_maxima_cv | round(3) }}</td>
+            </tr>
+
+
+            <tr class="table-light">
+              <th colspan="6" class="text-center">GEV (raw data), IID:
+              {% if cb_wcet.raw_is_iid %}
+                <span class="text-success">{{ cb_wcet.raw_is_iid }} </span>
+              {% else %}
+                <span class="text-danger">{{ cb_wcet.raw_is_iid }} </span>
+              {% endif %}
+              </th>
+            </tr>
+            <tr>
+              <th colspan="2">shape</th>
+              <th colspan="2">location</th>
+              <th colspan="2">scale</th>
+            </tr>
+            <tr>
+              <td colspan="2">{{cb_wcet.raw_gev_shape | round(10)}}</td>
+              <td colspan="2">{{cb_wcet.raw_gev_loc | round(10)}}</td>
+              <td colspan="2">{{cb_wcet.raw_gev_scale | round(10)}}</td>
+            </tr>
+
+            <tr class="table-light">
+              <th colspan="6" class="text-center">pWCET (raw data)</th>
+            </tr>
+            <tr>
+              <th>PPF 95%</th>
+              <th>PPF 99%</th>
+              <th>PPF 99.6%</th>
+              <th>PPF 99.9%</th>
+              <th>PPF 99.99%</th>
+              <th>PPF 99.999%</th>
+            </tr>
+            <tr>
+              <td>{{ cb_wcet.raw_ppf_95 | round(3) }}</td>
+              <td>{{ cb_wcet.raw_ppf_99 | round(3) }}</td>
+              <td>{{ cb_wcet.raw_ppf_99_6 | round(3) }}</td>
+              <td>{{ cb_wcet.raw_ppf_99_9 | round(3) }}</td>
+              <td>{{ cb_wcet.raw_ppf_99_99 | round(3) }}</td>
+              <td>{{ cb_wcet.raw_ppf_99_999 | round(3) }}</td>
+            <tr>
+
+            {% if not cb_wcet.raw_is_iid %}
+            <tr class="table-light">
+              <th colspan="6" class="text-center">GEV (IESTA-adjusted data), IID:
+                {% if cb_wcet.iesta_is_iid %}
+                <span class="text-success">{{ cb_wcet.iesta_is_iid }} </span>
+                {% else %}
+                <span class="text-danger">{{ cb_wcet.iesta_is_iid }} </span>
+                {% endif %}
+              </th>
+
+            </tr>
+            <tr>
+              <th colspan="2">shape</th>
+              <th colspan="2">location</th>
+              <th colspan="2">scale</th>
+            </tr>
+            <tr>
+              <td colspan="2">{{cb_wcet.iesta_gev_shape | round(10)}}</td>
+              <td colspan="2">{{cb_wcet.iesta_gev_loc | round(10)}}</td>
+              <td colspan="2">{{cb_wcet.iesta_gev_scale | round(10)}}</td>
+            </tr>
+
+            <tr class="table-light">
+              <th colspan="6" class="text-center">pWCET (IESTA-adjusted data)</th>
+            </tr>
+            <tr>
+              <th>PPF 95%</th>
+              <th>PPF 99%</th>
+              <th>PPF 99.6%</th>
+              <th>PPF 99.9%</th>
+              <th>PPF 99.99%</th>
+              <th>PPF 99.999%</th>
+            </tr>
+            <tr>
+              <td>{{ cb_wcet.iesta_ppf_95 | round(3) }}</td>
+              <td>{{ cb_wcet.iesta_ppf_99 | round(3) }}</td>
+              <td>{{ cb_wcet.iesta_ppf_99_6 | round(3) }}</td>
+              <td>{{ cb_wcet.iesta_ppf_99_9 | round(3) }}</td>
+              <td>{{ cb_wcet.iesta_ppf_99_99 | round(3) }}</td>
+              <td>{{ cb_wcet.iesta_ppf_99_999 | round(3) }}</td>
+            <tr>
+            {% endif %}  <!-- if not cb_wcet.raw_is_iid -->
+          </tbody>
+        </table>
+        <div class="col-md-12">
+        <p>ⓘ Kolmogorov-Smirnov test p-value is {{ cb_wcet.kstest_pvalue | round(3) }}: Block maximas are
+        {% if cb_wcet.kstest_pvalue < 0.05 %} <span class="text-danger">NOT</span> {% endif %}
+        distributed according to the GEV distribution. </p>
+        </div>
+
+        {% if not cb_wcet.raw_is_iid %}
+        <div class="row">
+          <p>ⓘ The values related to IESTA-adjusted data can vary across reports because IESTA is a randomized algorithm.</p>
+        </div>
+        {% endif %}  <!-- if not cb_wcet.raw_is_iid -->
+
+        <div class="row">
+          <img src="{{ cb_wcet.gev_pdf_png_filename }}" class="col-md-6">
+          <img src="{{ cb_wcet.cdf_png_filename }}" class="col-md-6">
+        </div> <!-- row -->
+        <div class="row">
+          <img src="{{ cb_wcet.pdf_png_filename }}" class="col-md-6">
+          <img src="{{ cb_wcet.cv_png_filename }}" class="col-md-6">
+        </div> <!-- row -->
+        {% else %}
+        <h5>No data</h4>
+        {% endif %}  <!-- cb_wcet.num_blocks > 0 -->
+      </div>
+      <hr>
+      {% endfor %}
+
+
+    </div>
+    <!-- container -->
+    <script>
+      new DataTable("#cb_table", {paging: true, pageLength: 10, info: true, searching: true});
+    </script>
+  </body>
+</html>

@@ -1,0 +1,3 @@
+# snapshot 2026-05-12 10:43:39 epoch=1778553819
+3127556 18428 27 128024 82147 24 /home/itri/rl_sar_new/rl_sar/install/lib/rl_ITRI/rl_sim 
+# totals minflt=18428 majflt=27 rss_kb=128024 vol_ctx=82147 invol_ctx=24 num=1

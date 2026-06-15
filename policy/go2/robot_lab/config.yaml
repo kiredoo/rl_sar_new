@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 go2/robot_lab:
-  model_name: "policy.pt"
-  num_observations: 45
-  observations: ["ang_vel", "gravity_vec", "commands", "dof_pos", "dof_vel", "actions"]
+  model_name: "2026_06_11.pt"
+  num_observations: 5229  # 45 proprio + 5184 depth (96×54)
+  observations: ["ang_vel", "gravity_vec", "commands", "dof_pos", "dof_vel", "actions", "depth_image"]
+  depth_width: 96
+  depth_height: 54
   observations_history: []  # 0 is the latest observation
   observations_history_priority: "time"  # "time" or "term" priority
   clip_obs: 100.0
@@ -16,10 +18,10 @@ go2/robot_lab:
                        100.0, 100.0, 100.0,
                        100.0, 100.0, 100.0,
                        100.0, 100.0, 100.0]
-  rl_kp: [20.0, 20.0, 20.0,
-          20.0, 20.0, 20.0,
-          20.0, 20.0, 20.0,
-          20.0, 20.0, 20.0]
+  rl_kp: [25.0, 25.0, 25.0,
+          25.0, 25.0, 25.0,
+          25.0, 25.0, 25.0,
+          25.0, 25.0, 25.0]
   rl_kd: [0.5, 0.5, 0.5,
           0.5, 0.5, 0.5,
           0.5, 0.5, 0.5,
@@ -51,4 +53,7 @@ go2/robot_lab:
                      0.00, 0.80, -1.50,
                      0.00, 0.80, -1.50,
                      0.00, 0.80, -1.50]
+  transition_duration:
+    default_dof_pos: 2.0
+
   joint_mapping: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]

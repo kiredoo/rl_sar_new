@@ -1,0 +1,6 @@
+# arm=D
+# started_at=2026-05-14T10:22:26+08:00
+# allocator=heaphook O1heap+TLSF hybrid
+# pool_label=1M
+# THREAD_LOCAL_POOL_SIZE=1048576
+# command=run_rl_sim_D.sh
