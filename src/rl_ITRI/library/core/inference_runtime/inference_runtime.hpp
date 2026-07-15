@@ -53,6 +53,14 @@ public:
      * @return Inference result vector
      */
     virtual std::vector<float> forward(const std::vector<std::vector<float>>& inputs) = 0;
+
+    /**
+     * @brief Reset model runtime state, if any
+     *
+     * Feed-forward and stateless backends use the default no-op implementation.
+     */
+    virtual void reset() {}
+
     // Default implementation throws error to prevent use unsupported models
     virtual std::vector<float> estimator(const std::vector<float>& inputs)
     {
@@ -97,6 +105,7 @@ public:
     bool load(const std::string& model_path) override;
     bool is_loaded() const override { return loaded_; }
     std::vector<float> forward(const std::vector<std::vector<float>>& inputs) override;
+    void reset() override;
     std::vector<float> estimator(const std::vector<float>& inputs) override;
     std::vector<float> history_encoder(const std::vector<float>& inputs) override;
     std::vector<float> depth_forward(const std::vector<float>& depth_vec, const std::vector<float>& proprio_vec) override;

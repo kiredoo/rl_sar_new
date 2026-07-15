@@ -443,6 +443,8 @@ void RL::InitRL(std::string robot_config_path)
     {
         throw std::runtime_error("Failed to load model from: " + model_path);
     }
+    this->model->reset();
+    this->policy_reset_requested.store(false, std::memory_order_release);
     //  init depth model
     if (this->config_name == "extreme_parkour")
     {

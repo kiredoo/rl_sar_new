@@ -120,6 +120,22 @@ std::vector<float> TorchModel::forward(const std::vector<std::vector<float>>& in
 #endif
 }
 
+void TorchModel::reset()
+{
+    if (!loaded_)
+    {
+        return;
+    }
+
+#ifdef USE_TORCH
+    torch::InferenceMode guard(true);
+    if (model_.find_method("reset"))
+    {
+        model_.run_method("reset");
+    }
+#endif
+}
+
 std::vector<float> TorchModel::estimator(const std::vector<float>& inputs)
 {
     if (!loaded_)

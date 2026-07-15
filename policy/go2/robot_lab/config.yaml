@@ -10,14 +10,14 @@ go2/robot_lab:
   observations_history: []  # 0 is the latest observation
   observations_history_priority: "time"  # "time" or "term" priority
   clip_obs: 100.0
-  clip_actions_lower: [-100.0, -100.0, -100.0,
-                       -100.0, -100.0, -100.0,
-                       -100.0, -100.0, -100.0,
-                       -100.0, -100.0, -100.0]
-  clip_actions_upper: [100.0, 100.0, 100.0,
-                       100.0, 100.0, 100.0,
-                       100.0, 100.0, 100.0,
-                       100.0, 100.0, 100.0]
+  clip_actions_lower: [-6.0, -6.0, -6.0,
+                       -6.0, -6.0, -6.0,
+                       -6.0, -6.0, -6.0,
+                       -6.0, -6.0, -6.0]
+  clip_actions_upper: [6.0, 6.0, 6.0,
+                       6.0, 6.0, 6.0,
+                       6.0, 6.0, 6.0,
+                       6.0, 6.0, 6.0]
   rl_kp: [25.0, 25.0, 25.0,
           25.0, 25.0, 25.0,
           25.0, 25.0, 25.0,

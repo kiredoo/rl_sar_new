@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include <atomic>
 #include <unistd.h>
 #include <algorithm>
 #include <tbb/concurrent_queue.h>
@@ -268,6 +269,7 @@ public:
 
     // thread safety
     std::mutex model_mutex;
+    std::atomic_bool policy_reset_requested{false};
 };
 
 class RLFSMState : public FSMState

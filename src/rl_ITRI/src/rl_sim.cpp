@@ -354,10 +354,18 @@ void RL_Sim::RobotControl()
     {
 #if defined(USE_ROS1)
         std_srvs::Empty empty;
-        this->gazebo_reset_world_client.call(empty);
+        if (this->gazebo_reset_world_client.call(empty))
+        {
+            this->policy_reset_requested.store(true, std::memory_order_release);
+        }
 #elif defined(USE_ROS2)
         auto empty_request = std::make_shared<std_srvs::srv::Empty::Request>();
-        auto result = this->gazebo_reset_world_client->async_send_request(empty_request);
+        this->gazebo_reset_world_client->async_send_request(
+            empty_request,
+            [this](rclcpp::Client<std_srvs::srv::Empty>::SharedFuture)
+            {
+                this->policy_reset_requested.store(true, std::memory_order_release);
+            });
 #endif
         this->control.current_keyboard = this->control.last_keyboard;
     }
@@ -592,6 +600,24 @@ std::vector<float> RL_Sim::Forward()
     if (!lock.owns_lock())
     {
         std::cout << LOGGER::WARNING << "Model is being reinitialized, using previous actions" << std::endl;
+        return this->obs.actions;
+    }
+
+    if (this->policy_reset_requested.exchange(false, std::memory_order_acq_rel))
+    {
+        if (this->model)
+        {
+            this->model->reset();
+        }
+        this->episode_length_buf = 0;
+        std::fill(this->obs.actions.begin(), this->obs.actions.end(), 0.0f);
+
+        std::vector<float> stale_output;
+        while (this->output_dof_pos_queue.try_pop(stale_output)) {}
+        while (this->output_dof_vel_queue.try_pop(stale_output)) {}
+        while (this->output_dof_tau_queue.try_pop(stale_output)) {}
+
+        std::cout << LOGGER::INFO << "Policy runtime state reset" << std::endl;
         return this->obs.actions;
     }
 
