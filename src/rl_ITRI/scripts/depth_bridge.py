@@ -64,7 +64,7 @@ class DepthBridge(Node):
             depth = cv2.resize(depth, (TARGET_W, TARGET_H), interpolation=cv2.INTER_LINEAR)
 
         depth = np.where(np.isfinite(depth), depth, 0.0)
-        depth = np.clip(depth, 0.0, MAX_DEPTH)
+        depth = np.where((depth >= 0.3) & (depth <= MAX_DEPTH), depth, 0.0)
         depth *= 0.333
 
         out = Float32MultiArray()
