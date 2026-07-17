@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 go2/robot_lab:
-  model_name: "2026_06_11.pt"
+  model_name: "go2_lstm_07-16_05-03-41_9300_jit.pt"
   num_observations: 5229  # 45 proprio + 5184 depth (96×54)
   observations: ["ang_vel", "gravity_vec", "commands", "dof_pos", "dof_vel", "actions", "depth_image"]
   depth_width: 96

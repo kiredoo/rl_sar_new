@@ -59,7 +59,7 @@ def generate_launch_description():
             "-topic", "/robot_description",
             "-entity", "robot_model",
             "-z", "1.0",
-            "-R", "3.14159",
+            # "-R", "3.14159",
         ],
         output="screen",
     )
