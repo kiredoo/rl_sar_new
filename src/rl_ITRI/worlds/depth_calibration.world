@@ -41,18 +41,18 @@
         <model name="static_environment">
             <static>true</static>
             <link name="box">
-                <pose>1.12 0 0.2335 0 0 0</pose>
+                <pose>1.1425 0 0.2335 0 0 0</pose>
                 <collision name="static_box_collision">
                     <geometry>
                         <box>
-                            <size>0.24 0.725 0.467</size>
+                            <size>0.285 1.04 0.51</size>
                         </box>
                     </geometry>
                 </collision>
                 <visual name="static_box_visual">
                     <geometry>
                         <box>
-                            <size>0.24 0.725 0.467</size>
+                            <size>0.285 1.04 0.51</size>
                         </box>
                     </geometry>
                     <material>
@@ -74,6 +74,48 @@
                     <geometry>
                         <box>
                             <size>1 0.02 0.01</size>
+                        </box>
+                    </geometry>
+                    <material>
+                        <ambient>0.2 0.2 0.2 1.0</ambient>
+                        <diffuse>.421 0.225 0.0 1.0</diffuse>
+                    </material>
+                </visual>
+            </link>
+            <link name="wall_1">
+                <pose>0 -1.1 0 0 0 0</pose>
+                <collision name="static_box_collision">
+                    <geometry>
+                        <box>
+                            <size>5 0.2 3</size>
+                        </box>
+                    </geometry>
+                </collision>
+                <visual name="static_box_visual">
+                    <geometry>
+                        <box>
+                            <size>5 0.2 3</size>
+                        </box>
+                    </geometry>
+                    <material>
+                        <ambient>0.2 0.2 0.2 1.0</ambient>
+                        <diffuse>.421 0.225 0.0 1.0</diffuse>
+                    </material>
+                </visual>
+            </link>
+            <link name="wall_2">
+                <pose>0.0 1.1 0.0 0 0 0</pose>
+                <collision name="static_box_collision">
+                    <geometry>
+                        <box>
+                            <size>5 0.2 3</size>
+                        </box>
+                    </geometry>
+                </collision>
+                <visual name="static_box_visual">
+                    <geometry>
+                        <box>
+                            <size>5 0.2 3</size>
                         </box>
                     </geometry>
                     <material>

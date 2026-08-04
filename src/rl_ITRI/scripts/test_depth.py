@@ -2,7 +2,7 @@
 """
 Verify depth camera pipeline:
   - /depth_camera/depth/image_raw  : raw Gazebo depth (metres, inf = no hit)
-  - /forward_depth_image           : preprocessed bridge output ([0, 1])
+  - /forward_depth_image           : preprocessed bridge output (54×96, scaled ÷3.0, range [0, 1])
 
 Run:
   python3 src/rl_ITRI/scripts/test_depth.py
@@ -17,14 +17,21 @@ import numpy as np
 from cv_bridge import CvBridge
 import cv2
 
+# Must match depth_bridge.py TARGET_H / TARGET_W
+BRIDGE_H = 54
+BRIDGE_W = 96
+BRIDGE_MIN_DEPTH = 0.3
+BRIDGE_MAX_DEPTH = 3.0  # metres; bridge scales ÷3.0 → output range [0, 1]
+
 
 class DepthTester(Node):
     def __init__(self):
         super().__init__('depth_tester')
         self.bridge = CvBridge()
 
-        # OpenCV window for visualizing the raw depth image
+        # OpenCV windows for visualizing depth images
         cv2.namedWindow('Depth Raw', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('Depth Bridge', cv2.WINDOW_NORMAL)
 
         sensor_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -65,35 +72,35 @@ class DepthTester(Node):
         # replace non-finite with 0 for visualization
         disp[~finite_mask] = 0.0
 
-        if finite_vals.size > 0:
-            vmin = float(finite_vals.min())
-            vmax = float(finite_vals.max())
-            if vmin == vmax:
-                vmax = vmin + 1e-3
-        else:
-            vmin, vmax = 0.0, 10.0
-
-        norm = (disp - vmin) / (vmax - vmin)
-        norm = np.clip(norm, 0.0, 1.0)
+        norm = np.clip(disp, 0.0, BRIDGE_MAX_DEPTH) / BRIDGE_MAX_DEPTH
         img8 = (norm * 255.0).astype(np.uint8)
-        img_color = cv2.applyColorMap(img8, cv2.COLORMAP_JET)
-        # show non-finite pixels as black
-        img_color[~finite_mask] = (0, 0, 0)
-
-        cv2.imshow('Depth Raw', img_color)
+        img8[~finite_mask] = 0
+        cv2.imshow('Depth Raw', img8)
         cv2.waitKey(1)
 
     def bridge_callback(self, msg: Float32MultiArray):
         data = np.array(msg.data, dtype=np.float32)
         nonzero = data[data > 0]
+        expected = BRIDGE_H * BRIDGE_W
 
-        print(f'\n[BRIDGE]  count={len(data)}  (expected 5184)')
+        print(f'\n[BRIDGE]  count={len(data)}  (expected {expected} = {BRIDGE_H}×{BRIDGE_W})')
         print(f'          zero={np.sum(data == 0)}  nonzero={len(nonzero)}')
         if len(nonzero) > 0:
-            print(f'          value range: {nonzero.min():.3f}  –  {nonzero.max():.3f}  (scaled ×0.333)')
+            print(f'          value range: {nonzero.min():.3f}  –  {nonzero.max():.3f}'
+                  f'  (valid depth [{BRIDGE_MIN_DEPTH}, {BRIDGE_MAX_DEPTH}] m, scaled ÷3.0)')
             print(f'          sample (first 8 nonzero): {[round(float(v), 3) for v in nonzero[:8]]}')
         else:
             print('          ALL zeros — bridge output is empty (inf input or bridge not running)')
+
+        if len(data) != expected:
+            print(f'          [WARN] unexpected count {len(data)}, cannot display')
+            return
+
+        grid = data.reshape(BRIDGE_H, BRIDGE_W)
+        norm = np.clip(grid, 0.0, 1.0)  # already in [0, 1] after bridge ÷3.0 scaling
+        img8 = (norm * 255.0).astype(np.uint8)  # invalid pixels (0) stay black naturally
+        cv2.imshow('Depth Bridge', img8)
+        cv2.waitKey(1)
 
 
 def main():

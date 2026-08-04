@@ -65,7 +65,7 @@ class DepthBridge(Node):
 
         depth = np.where(np.isfinite(depth), depth, 0.0)
         depth = np.where((depth >= 0.3) & (depth <= MAX_DEPTH), depth, 0.0)
-        depth *= 0.333
+        depth /= 3.0  # scale to [0, 1]
 
         out = Float32MultiArray()
         out.data = depth.flatten().tolist()
